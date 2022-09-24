@@ -1,9 +1,9 @@
 import socket
-from network import Network
+from network import ClientNetwork
 
 
 def initialize_server():
-    client_multi_socket = Network()
+    client_multi_socket = ClientNetwork()
     client_multi_socket.connect()
 
     return client_multi_socket
