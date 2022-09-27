@@ -1,0 +1,30 @@
+message format: (in json):
+
+1. query handles
+	***CLIENT TO SERVER***
+		{ 'request' : 'query_users' }
+	***SERVER TP CLIENT***
+		SUCCESS:
+			{'response' : 'query__users', 'error_code' : 'success',  'user_list': ['user1', 'user2', 'user3']}
+		FAILURE:
+			{'response' : 'query_users', 'error_code' : 'failure'}
+
+2. follow handles
+
+	***CLIENT TO SERVER***
+		{ 'request' : 'follow_user', 'username': 'username' }
+	***SERVER TO CLIENT***
+		SUCCESS:
+			{ 'response' : 'follow_user', 'error_code': 'success' }
+		FAILURE: 
+			{ 'response' : 'follow_user', 'error_code': 'failure' }
+
+3. follow handles
+	***CLIENT TO SERVER***
+		{ 'request' : 'drop_user', 'username': 'username' }	
+	***SERVER TO CLIENT***
+		SUCCESS:
+			{ 'response' : 'follow_user', 'error_code': 'success' }
+		FAILURE:
+			{ 'response' : 'follow_user', 'error_code': 'failure' }
+
