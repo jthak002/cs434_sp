@@ -1,11 +1,18 @@
 from _thread import *
 
 from network import ServerNetwork
+from tracker import Tracker
+
+
+def initialize_socket():
+    server = ServerNetwork()
+    server.server_start()
+    return server
 
 
 def main():
-    server = ServerNetwork()
-    server.server_start()
+    server = initialize_socket()
+    tracker = Tracker()
     server_is_running = True
 
     while server_is_running:
@@ -16,7 +23,7 @@ def main():
         server.thread_count += 1
         print('Thread Number: ' + str(server.thread_count))
 
-    server.server_side_socket.close()
+    server.close()
 
 
 if __name__ == '__main__':

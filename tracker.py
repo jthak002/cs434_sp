@@ -24,8 +24,12 @@ class Tracker:
 
     def tweet(self, curr_user_handle, tweet_str):
         logical_ring_list = self.handles[curr_user_handle]['follower']
-        for follower in logical_ring_list:
-            print(follower)
+
+        for i in range(len(logical_ring_list)):
+            if i == 0:
+                print(logical_ring_list[i])
+            else:
+                print(logical_ring_list[i])
 
     def end_tweet(self):
         pass
