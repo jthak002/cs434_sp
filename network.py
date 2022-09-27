@@ -1,14 +1,15 @@
-import socket
-
-ECHO = 0
-TWEET = 1
-
+import time
+import json
 
 class ServerNetwork:
-    def __init__(self):
-        self.server_side_socket = socket.socket()
-        self.host = socket.gethostname()
-        self.port = 5000
+    port: int
+    host: str
+    thread_count = 0
+
+    def __init__(self,host='127.0.0.1', port=5000):
+        self.server_side_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.host = host
+        self.port = port
         self.thread_count = 0
 
     def server_start(self):
@@ -16,32 +17,45 @@ class ServerNetwork:
             self.server_side_socket.bind((self.host, self.port))
         except socket.error as e:
             print(str(e))
-
-        self.server_side_socket.listen(5)
+        # Note to Wei: We do not use the socket.listen() class for UDP connections because the protocol is stateless and
+        # packets are unorganized.
+        # https://stackoverflow.com/questions/8194323/why-the-listen-function-call-is-not-needed-when-use-udp-socket
+        # self.server_side_socket.listen(5)
         print('Server has started... Socket is listening...')
 
-    def close(self):
-        self.server_side_socket.close()
+    def server_recv_mesg(self, test_timeout=-1):
+        print("Waiting for message")
+        raw_msg = self.server_side_socket.recvfrom(1024)
+        print(raw_msg)
+        # TEST - this is a statement to test the buffering on the udp socket.
+        if test_timeout > 0:
+            time.sleep(test_timeout)
+        return raw_msg[0], raw_msg[1][0], raw_msg[1][1]
 
-    def multi_threaded_client(self, connection):
-        connection.send(str.encode('Server is working:'))
-        thread_is_running = True
+    @staticmethod
+    def server_parse_mesg(source_ip: str, source_port, message: bytes):
+        try:
+            json_message = json.loads(message.decode())
+        except json.JSONDecodeError:
+            print("Encountered error while decoding JSON - discarding packet.")
+            return
+        json_message.update("src_ip", source_ip)
+        json_message.update("src_port", source_port)
+        return json_message
 
-        while thread_is_running:
-            data = connection.recv(2048)
-            response = data.decode('utf-8')
-
-            if response.response_spliter() == ECHO:
-                response = '0,' + data.decode('utf-8')
-            elif response.response_spliter() == TWEET:
+    '''
+    @staticmethod
+    def server_route_mesg(json_message:dict):
+        user_request = json_message.get('request', None)
+        if user_request:
+            if user_request == 'query_handles':
                 pass
+        else:
+            print("server_route_mesg found malformed JSON. dropping packet.")
+    '''
 
-            if not data:
-                break
-
-            connection.sendall(str.encode(response))
-
-        connection.close()
+    def server_conn_close(self):
+        self.server_side_socket.close()
 
 
 class ClientNetwork:
