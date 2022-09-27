@@ -1,4 +1,4 @@
-from _thread import *
+import sys
 
 from network import ServerNetwork
 
@@ -6,17 +6,20 @@ from network import ServerNetwork
 def main():
     server = ServerNetwork()
     server.server_start()
-    server_is_running = True
+    try:
+        while True:
+            # socket.accept() is a TCP method and not a UDP method --> socket.accept() accepts the incoming connection
+            # and TCP 3-Way handshake. What we will do for right now is no-multithreading simple packet accepting.
+            # client, address = server.server_side_socket.accept()
+            # print('Connected to: ' + address[0] + ':' + str(address[1]))
+            raw_msg, src_ip, src_port = server.server_recv_mesg(test_timeout=10)
+            json_message = server.server_parse_mesg(message=raw_msg, source_ip=src_ip, source_port=src_port)
+            ## tracker code that uses the json message to respond to user goes here.
 
-    while server_is_running:
-        client, address = server.server_side_socket.accept()
-        print('Connected to: ' + address[0] + ':' + str(address[1]))
-
-        start_new_thread(server.multi_threaded_client, (client,))
-        server.thread_count += 1
-        print('Thread Number: ' + str(server.thread_count))
-
-    server.server_side_socket.close()
+    except KeyboardInterrupt:
+        print("\nKeyboardInterrupt Exception: User Initiated Server Shutdown - Exiting Now.")
+        server.server_conn_close()
+        sys.exit(0)
 
 
 if __name__ == '__main__':
