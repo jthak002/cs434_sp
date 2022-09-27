@@ -1,13 +1,18 @@
+import socket
 import time
 import json
+
+from tracker import Tracker
+
 
 class ServerNetwork:
     port: int
     host: str
     thread_count = 0
 
-    def __init__(self,host='127.0.0.1', port=5000):
+    def __init__(self, host='127.0.0.1', port=5000):
         self.server_side_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.tracker = Tracker()
         self.host = host
         self.port = port
         self.thread_count = 0
@@ -23,6 +28,7 @@ class ServerNetwork:
         # self.server_side_socket.listen(5)
         print('Server has started... Socket is listening...')
 
+    # Get message from client
     def server_recv_mesg(self, test_timeout=-1):
         print("Waiting for message")
         raw_msg = self.server_side_socket.recvfrom(1024)
@@ -32,16 +38,28 @@ class ServerNetwork:
             time.sleep(test_timeout)
         return raw_msg[0], raw_msg[1][0], raw_msg[1][1]
 
+    # Parse message from client
     @staticmethod
-    def server_parse_mesg(source_ip: str, source_port, message: bytes):
+    def server_parse_mesg(source_ip: str, source_port: int, message: bytes):
         try:
-            json_message = json.loads(message.decode())
+            json_dict = \
+                {
+                    "message":  message.decode(),
+                    "src_ip": source_ip,
+                    "src_port": source_port
+                }
+
+            json_message = json.dumps(json_dict)
+
         except json.JSONDecodeError:
             print("Encountered error while decoding JSON - discarding packet.")
             return
-        json_message.update("src_ip", source_ip)
-        json_message.update("src_port", source_port)
+
         return json_message
+
+    # Send message to client
+    def server_send(self, source_ip: str, source_port: int, message: bytes):
+        pass
 
     '''
     @staticmethod
@@ -60,7 +78,7 @@ class ServerNetwork:
 
 class ClientNetwork:
     def __init__(self):
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server = socket.gethostname()
         self.port = 5000
         self.addr = (self.server, self.port)

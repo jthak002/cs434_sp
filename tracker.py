@@ -2,7 +2,6 @@ class Tracker:
     number_of_users = 0
     handles = {}
     follow = {}
-    logical_ring = []
 
     def __init__(self):
         pass
@@ -45,6 +44,7 @@ class Tracker:
                 pass
 
 
+"""
 # Test
 tracker = Tracker()
 
@@ -71,3 +71,4 @@ tracker.follow("jason", "ben")
 tracker.follow("mary", "ben")
 tracker.follow("jason", "ben")
 tracker.tweet("ben", "Test")
+"""
