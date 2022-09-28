@@ -75,15 +75,14 @@ class ServerNetwork:
 
         return message_dict
 
-    @staticmethod
     def server_route_mesg(self, json_message: dict):
         user_request = json_message.get('request', None)
 
         if user_request:
             if user_request == "register":
-                is_success = self.tracker.register(user_request['handle'], user_request['source_ip'],
-                                      user_request['tracker_port'], user_request['peer_port_left'],
-                                      user_request['peer_port_right'])
+                is_success = self.tracker.register(json_message['handle'], json_message['source_ip'],
+                                      json_message['tracker_port'], json_message['peer_port_left'],
+                                      json_message['peer_port_right'])
 
                 return basic_response(user_request, is_success)
             elif user_request == "query_users":
@@ -104,7 +103,8 @@ class ServerNetwork:
 
     # Send message to client
     def server_send(self, source_ip: str, source_port: int, message: bytes):
-        self.server_side_socket.sendto(message, (source_ip, source_port))
+
+        self.server_side_socket.sendto(json.dumps(message).encode(), (source_ip, source_port))
 
     def server_conn_close(self):
         self.server_side_socket.close()
@@ -159,6 +159,7 @@ class ClientNetwork:
         print("bind successful!")
 
     def client_register(self, handle: str):
+
         print("Compiling the REGISTER REQUEST")
         dict_message = {'request': 'register', 'handle': handle, 'source_ip': self.host,
                         'tracker_port': self.port_tracker, 'peer_port_left': self.port_peer_left,
