@@ -11,11 +11,13 @@ class Tracker:
         for curr_handle in arr_handles:
             if handle == curr_handle:
                 print("Handle already exist in the database!")
-                return
+                return False
 
         self.number_of_users += 1
         self.handles[handle] = {"source_ip": source_ip, "tracker_port": tracker_port, "peer_port_left": peer_port_left,
                                 "peer_port_right": peer_port_right, "follower": []}
+
+        return True
 
     def query_handles(self):
         arr_handles = self.get_all_handles()

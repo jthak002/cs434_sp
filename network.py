@@ -77,10 +77,11 @@ class ServerNetwork:
 
         if user_request:
             if user_request == "register":
-                self.tracker.register(user_request['handle'], user_request['source_ip'],
+                is_success = self.tracker.register(user_request['handle'], user_request['source_ip'],
                                       user_request['tracker_port'], user_request['peer_port_left'],
                                       user_request['peer_port_right'])
-                return basic_response(user_request, True)
+
+                return basic_response(user_request, is_success)
             elif user_request == "query_users":
                 query_results = self.tracker.query_handles()
                 return query_handle_response(True, query_results[0], query_results[1]["followers"])
