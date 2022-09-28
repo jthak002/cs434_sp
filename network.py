@@ -46,7 +46,7 @@ class ServerNetwork:
     @staticmethod
     def server_parse_mesg(source_ip: str, source_port: int, message: json):
         try:
-            message_dict = json.load(message)
+            message_dict = json.load(message.decode())
             user_request = message_dict['request']
 
             if user_request == "register":
