@@ -1,6 +1,6 @@
 import sys
 
-from network import ServerNetwork
+from server_network import ServerNetwork
 from tracker import Tracker
 
 
