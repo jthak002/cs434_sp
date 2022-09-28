@@ -20,10 +20,11 @@ def main():
             # client, address = server.server_side_socket.accept()
             # print('Connected to: ' + address[0] + ':' + str(address[1]))
             raw_msg, src_ip, src_port = server.server_recv_mesg(test_timeout=10)
-            json_message = server.server_parse_mesg(message=raw_msg, source_ip=src_ip, source_port=src_port)
+            dict_message = server.server_parse_mesg(message=raw_msg, source_ip=src_ip, source_port=src_port)
 
-            ## tracker code that uses the json message to respond to user goes here
-
+            # tracker code that uses the json message to respond to user goes here
+            # Parsing client request
+            server.server_route_mesg(dict_message)
 
     except KeyboardInterrupt:
         print("\nKeyboardInterrupt Exception: User Initiated Server Shutdown - Exiting Now.")

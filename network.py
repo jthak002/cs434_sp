@@ -38,39 +38,68 @@ class ServerNetwork:
             time.sleep(test_timeout)
         return raw_msg[0], raw_msg[1][0], raw_msg[1][1]
 
-    # Parse message from client
+    # Parse message from client and verify json message contains all required key:value pairs
     @staticmethod
-    def server_parse_mesg(source_ip: str, source_port: int, message: bytes):
+    def server_parse_mesg(source_ip: str, source_port: int, message: json):
         try:
-            json_dict = \
-                {
-                    "message":  message.decode(),
-                    "src_ip": source_ip,
-                    "src_port": source_port
-                }
+            message_dict = json.load(message)
+            user_request = message_dict['request']
 
-            json_message = json.dumps(json_dict)
+            if user_request == "register":
+                key_array = ['handle', 'source_ip', 'tracker_port', 'peer_port_left', 'peer_port_right']
+                for key_check in key_array:
+                    if message_dict[key_check] is None:
+                        raise json.JSONDecodeError
+            elif user_request == "query_users":
+                pass
+            elif user_request == "follow_user":
+                key_array = ['username']
+                for key_check in key_array:
+                    if message_dict[key_check] is None:
+                        raise json.JSONDecodeError
+            elif user_request == "drop_user":
+                key_array = ['username']
+                for key_check in key_array:
+                    if message_dict[key_check] is None:
+                        raise json.JSONDecodeError
+            else:
+                raise json.JSONDecodeError
 
         except json.JSONDecodeError:
             print("Encountered error while decoding JSON - discarding packet.")
-            return
+            return basic_response(user_request, False)
 
-        return json_message
+        return message_dict
+
+    @staticmethod
+    def server_route_mesg(self, json_message: dict):
+        user_request = json_message.get('request', None)
+
+        if user_request:
+            if user_request == "register":
+                self.tracker.register(user_request['handle'], user_request['source_ip'],
+                                      user_request['tracker_port'], user_request['peer_port_left'],
+                                      user_request['peer_port_right'])
+                return basic_response(user_request, True)
+            elif user_request == "query_users":
+                query_results = self.tracker.query_handles()
+                return query_handle_response(True, query_results[0], query_results[1]["followers"])
+            elif user_request == "follow_user":
+                self.tracker.follow(user_request["username_i"], user_request["username_j"])
+                return basic_response(user_request, True)
+            elif user_request == "drop_user":
+                self.tracker.follow(user_request["username_i"], user_request["username_j"])
+                return basic_response(user_request, True)
+            else:
+                print("server_route_mesg found malformed JSON. dropping packet.")
+        else:
+            print("server_route_mesg found malformed JSON. dropping packet.")
+
+        return basic_response(user_request, False)
 
     # Send message to client
     def server_send(self, source_ip: str, source_port: int, message: bytes):
         pass
-
-    '''
-    @staticmethod
-    def server_route_mesg(json_message:dict):
-        user_request = json_message.get('request', None)
-        if user_request:
-            if user_request == 'query_handles':
-                pass
-        else:
-            print("server_route_mesg found malformed JSON. dropping packet.")
-    '''
 
     def server_conn_close(self):
         self.server_side_socket.close()
@@ -103,6 +132,19 @@ class ClientNetwork:
         except socket.error as e:
             print(e)
 
+
+def basic_response(request, is_success):
+    if is_success:
+        return {'request': request, 'error_code': 'success'}
+
+    return {'request': request, 'error_code': 'failure'}
+
+
+def query_handle_response(is_success, user_count, list_users):
+    if is_success:
+        return {'request': 'query_users', 'error_code': 'success', 'num_users': user_count, 'user_list': list_users}
+
+    return {'request': 'query_users', 'error_code': 'failure'}
 
 def response_spliter(res):
     res_str_list = res.split(',')

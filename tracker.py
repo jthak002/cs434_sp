@@ -1,7 +1,6 @@
 class Tracker:
     number_of_users = 0
     handles = {}
-    follow = {}
 
     def __init__(self):
         pass
@@ -11,7 +10,11 @@ class Tracker:
         self.handles[handle] = {"ip_address": ip_address, "port": port, "follower": []}
 
     def query_handles(self):
-        return [self.number_of_users, self.handles]
+        arr_key = []
+        for key, value in self.handles:
+            arr_key.append(key)
+
+        return [self.number_of_users, arr_key]
 
     def follow(self, curr_user_handle, follow_user_handle):
         if curr_user_handle not in self.handles[follow_user_handle]["follower"]:
