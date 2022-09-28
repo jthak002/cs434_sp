@@ -13,7 +13,7 @@ message format: (in json):
 2. query handles
 	***CLIENT TO SERVER***
 		{ 'request' : 'query_users' }
-	***SERVER TP CLIENT***
+	***SERVER TO CLIENT***
 		SUCCESS:
 			{'response' : 'query_users', 'error_code' : 'success',  'num_users': number,
 			'user_list': [(user1_tuple), (user2_tuple), (user3_tuple)]}
@@ -21,7 +21,6 @@ message format: (in json):
 			{'response' : 'query_users', 'error_code' : 'failure'}
 
 3. follow handles
-
 	***CLIENT TO SERVER***
 		{ 'request' : 'follow_user', 'username_i': username, 'username_j': username }
 	***SERVER TO CLIENT***
@@ -38,4 +37,3 @@ message format: (in json):
 			{ 'response' : 'follow_user', 'error_code': 'success' }
 		FAILURE:
 			{ 'response' : 'follow_user', 'error_code': 'failure' }
-
