@@ -103,11 +103,41 @@ class ClientNetwork:
                   f"please try another port.")
             exit(1)
 
-    def client_register(self):
-        dict_message = {'request': 'register', 'source_ip': self.host, 'port_tracker': self.port_tracker,
-                        'port_peer_left': self.port_peer_left, 'port_peer_right': self.port_peer_right}
-        self.socket_tracker.sendto(json.dumps(dict_message).encode(), (TRACKER_URL, TRACKER_PORT))
+    def client_register(self, handle: str):
+        dict_message = {'request': 'register', 'handle': handle, 'source_ip': self.host,
+                        'port_tracker': self.port_tracker, 'port_peer_left': self.port_peer_left,
+                        'port_peer_right': self.port_peer_right}
 
+        raw_message = None
+        while True:
+            self.socket_tracker.sendto(json.dumps(dict_message).encode(), (TRACKER_URL, TRACKER_PORT))
+            self.socket_tracker.settimeout(30)
+            try:
+                raw_message = self.socket_tracker.recvfrom(1024)
+            except TimeoutError:
+                print("the previous message to the tracker did not get a response. will try again")
+                continue
+            break
+        if type(raw_message) is tuple and len(raw_message) == 2:
+            json_message = raw_message[0].decode()
+            src_ip = raw_message[1][0]
+            src_port = raw_message[1][1]
+            if src_ip == TRACKER_URL and src_port == TRACKER_PORT:
+                if json.loads(json_message).get('response') == 'register' and \
+                        json.loads(json_message).get('error_code') == 'success':
+                    print("The handle {handle}@{self.host}:{self.port_tracker} has registered successfully!")
+                elif json.loads(json_message).get('response') == 'register' and \
+                        json.loads(json_message).get('error_code') == 'failure':
+                    print("The handle {handle}@{self.host}:{self.port_tracker} received failure message from server")
+                else:
+                    print("received malformed message - printing to console")
+                    print(raw_message)
+            else:
+                print("received unknown message - exiting now")
+        else:
+            print("error case")
 
     def close(self):
-        self.client.close()
+        self.socket_tracker.close()
+        self.socket_peer_left.close()
+        self.socket_peer_right.close()
