@@ -1,6 +1,11 @@
+import os
 import socket
 import time
 import json
+
+TRACKER_URL = os.getenv('TRACKER_URL','127.0.0.1')
+TRACKER_PORT = int(os.getenv('TRACKER_PORT', '5000'))
+
 
 class ServerNetwork:
     port: int
@@ -62,32 +67,47 @@ class ServerNetwork:
 class ClientNetwork:
     host: str
     port_tracker: int
-    port_peer: int
+    port_peer_left: int
+    port_peer_right: int
     socket_tracker: socket.socket
-    socket_peer: socket.socket
+    socket_peer_left: socket.socket
+    socket_peer_right: socket.socket
     follower_list: [str]
 
-    def __init__(self, host='127.0.0.1', port_tracker=5001, port_peer=5002):
+    def __init__(self, host='127.0.0.1', port_tracker=5001, port_peer_left=5002, port_peer_right=5003):
         self.socket_tracker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket_peer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socket_peer_left = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socket_peer_right = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.host = host
         self.port_tracker = port_tracker
-        self.port_peer = port_peer
+        self.port_peer_left = port_peer_left
+        self.port_peer_right = port_peer_right
 
     def setup(self):
         try:
             self.socket_tracker.bind((self.host, self.port_tracker))
         except OSError:
-            print(f"port={self.port_tracker} for tracker comms is being used by another process. please try another port.")
+            print(f"port={self.port_tracker} for tracker comms is being used by another process. "
+                  f"please try another port.")
             exit(1)
         try:
-            self.socket_tracker.bind((self.host, self.port_tracker))
+            self.socket_peer_left.bind((self.host, self.port_peer_left))
         except OSError:
-            print(f"port={self.port_peer} for peer comms is being used by another process. please try another port.")
+            print(f"port={self.port_peer_left} for peer_LEFT comms is being used by another process. "
+                  f"please try another port.")
+            exit(1)
+        try:
+            self.socket_peer_right.bind((self.host, self.port_peer_right))
+        except OSError:
+            print(f"port={self.port_peer_left} for peer_RIGHT comms is being used by another process. "
+                  f"please try another port.")
             exit(1)
 
     def client_register(self):
-        pass
+        dict_message = {'request': 'register', 'source_ip': self.host, 'port_tracker': self.port_tracker,
+                        'port_peer_left': self.port_peer_left, 'port_peer_right': self.port_peer_right}
+        self.socket_tracker.sendto(json.dumps(dict_message).encode(), (TRACKER_URL, TRACKER_PORT))
+
 
     def close(self):
         self.client.close()
