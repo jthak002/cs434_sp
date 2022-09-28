@@ -24,7 +24,8 @@ def main():
 
             # tracker code that uses the json message to respond to user goes here
             # Parsing client request
-            server.server_route_mesg(dict_message)
+            dict_res = server.server_route_mesg(dict_message)
+            server.server_send(message=dict_res, source_ip=src_ip, source_port=src_port)
 
     except KeyboardInterrupt:
         print("\nKeyboardInterrupt Exception: User Initiated Server Shutdown - Exiting Now.")

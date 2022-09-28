@@ -5,33 +5,35 @@ class Tracker:
     def __init__(self):
         pass
 
-    def register(self, handle, ip_address, port):
+    # register @<handle> <IPv4-address> <port>
+    def register(self, handle, source_ip, tracker_port, peer_port_left, peer_port_right):
+        arr_handles = self.get_all_handles()
+        for curr_handle in arr_handles:
+            if handle == curr_handle:
+                print("Handle already exist in the database!")
+                return
+
         self.number_of_users += 1
-        self.handles[handle] = {"ip_address": ip_address, "port": port, "follower": []}
+        self.handles[handle] = {"source_ip": source_ip, "tracker_port": tracker_port, "peer_port_left": peer_port_left,
+                                "peer_port_right": peer_port_right, "follower": []}
 
     def query_handles(self):
-        arr_key = []
-        for key, value in self.handles:
-            arr_key.append(key)
+        arr_handles = self.get_all_handles()
 
-        return [self.number_of_users, arr_key]
+        return [self.number_of_users, arr_handles]
 
+    # follow @<handlei> @<handlej>
     def follow(self, curr_user_handle, follow_user_handle):
         if curr_user_handle not in self.handles[follow_user_handle]["follower"]:
             self.handles[follow_user_handle]["follower"].append(curr_user_handle)
             self.handles[follow_user_handle]["follower"].sort()
 
+    # drop @<handlei> @<handlej>
     def drop(self, curr_user_handle, follow_user_handle):
         self.handles[follow_user_handle]["follower"].remove(curr_user_handle)
 
     def tweet(self, curr_user_handle, tweet_str):
-        logical_ring_list = self.handles[curr_user_handle]['follower']
-
-        for i in range(len(logical_ring_list)):
-            if i == 0:
-                print(logical_ring_list[i])
-            else:
-                print(logical_ring_list[i])
+        pass
 
     def end_tweet(self):
         pass
@@ -45,6 +47,13 @@ class Tracker:
                 self.handles[user_handle]["follower"].remove(curr_user_handle)
             except ValueError:
                 pass
+
+    def get_all_handles(self):
+        arr_key = []
+        for key, value in self.handles:
+            arr_key.append(key)
+
+        return arr_key
 
 
 """

@@ -99,7 +99,7 @@ class ServerNetwork:
 
     # Send message to client
     def server_send(self, source_ip: str, source_port: int, message: bytes):
-        pass
+        self.server_side_socket.sendto(message, (source_ip, source_port))
 
     def server_conn_close(self):
         self.server_side_socket.close()
