@@ -1,4 +1,4 @@
-from network import ClientNetwork
+from client_network import ClientNetwork
 
 
 def main():
