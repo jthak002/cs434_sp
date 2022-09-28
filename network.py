@@ -106,31 +106,37 @@ class ServerNetwork:
 
 
 class ClientNetwork:
-    def __init__(self):
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server = socket.gethostname()
-        self.port = 5000
-        self.addr = (self.server, self.port)
+    host: str
+    port_tracker: int
+    port_peer: int
+    socket_tracker: socket.socket
+    socket_peer: socket.socket
+    follower_list: [str]
+
+    def __init__(self, host='127.0.0.1', port_tracker=5001, port_peer=5002):
+        self.socket_tracker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socket_peer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.host = host
+        self.port_tracker = port_tracker
+        self.port_peer = port_peer
+
+    def setup(self):
+        try:
+            self.socket_tracker.bind((self.host, self.port_tracker))
+        except OSError:
+            print(f"port={self.port_tracker} for tracker comms is being used by another process. please try another port.")
+            exit(1)
+        try:
+            self.socket_tracker.bind((self.host, self.port_tracker))
+        except OSError:
+            print(f"port={self.port_peer} for peer comms is being used by another process. please try another port.")
+            exit(1)
+
+    def client_register(self):
+        pass
 
     def close(self):
         self.client.close()
-
-    def connect(self):
-        try:
-            self.client.connect(self.addr)
-            res = self.client.recv(1024).decode("utf-8")
-            print(res)
-        except socket.error as e:
-            print(str(e))
-
-    def send(self, message):
-        try:
-            self.client.send(str.encode(message))
-            res = self.client.recv(1024)
-            return res
-
-        except socket.error as e:
-            print(e)
 
 
 def basic_response(request, is_success):
@@ -145,8 +151,3 @@ def query_handle_response(is_success, user_count, list_users):
         return {'request': 'query_users', 'error_code': 'success', 'num_users': user_count, 'user_list': list_users}
 
     return {'request': 'query_users', 'error_code': 'failure'}
-
-def response_spliter(res):
-    res_str_list = res.split(',')
-
-    return res_str_list
