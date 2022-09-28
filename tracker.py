@@ -1,31 +1,41 @@
 class Tracker:
     number_of_users = 0
     handles = {}
-    follow = {}
-    logical_ring = []
 
     def __init__(self):
         pass
 
-    def register(self, handle, ip_address, port):
+    # register @<handle> <IPv4-address> <port>
+    def register(self, handle, source_ip, tracker_port, peer_port_left, peer_port_right):
+        arr_handles = self.get_all_handles()
+        for curr_handle in arr_handles:
+            if handle == curr_handle:
+                print("Handle already exist in the database!")
+                return False
+
         self.number_of_users += 1
-        self.handles[handle] = {"ip_address": ip_address, "port": port, "follower": []}
+        self.handles[handle] = {"source_ip": source_ip, "tracker_port": tracker_port, "peer_port_left": peer_port_left,
+                                "peer_port_right": peer_port_right, "follower": []}
+
+        return True
 
     def query_handles(self):
-        return [self.number_of_users, self.handles]
+        arr_handles = self.get_all_handles()
 
+        return [self.number_of_users, arr_handles]
+
+    # follow @<handlei> @<handlej>
     def follow(self, curr_user_handle, follow_user_handle):
         if curr_user_handle not in self.handles[follow_user_handle]["follower"]:
             self.handles[follow_user_handle]["follower"].append(curr_user_handle)
             self.handles[follow_user_handle]["follower"].sort()
 
+    # drop @<handlei> @<handlej>
     def drop(self, curr_user_handle, follow_user_handle):
         self.handles[follow_user_handle]["follower"].remove(curr_user_handle)
 
     def tweet(self, curr_user_handle, tweet_str):
-        logical_ring_list = self.handles[curr_user_handle]['follower']
-        for follower in logical_ring_list:
-            print(follower)
+        pass
 
     def end_tweet(self):
         pass
@@ -40,7 +50,15 @@ class Tracker:
             except ValueError:
                 pass
 
+    def get_all_handles(self):
+        arr_key = []
+        for key, value in self.handles:
+            arr_key.append(key)
 
+        return arr_key
+
+
+"""
 # Test
 tracker = Tracker()
 
@@ -67,3 +85,4 @@ tracker.follow("jason", "ben")
 tracker.follow("mary", "ben")
 tracker.follow("jason", "ben")
 tracker.tweet("ben", "Test")
+"""
