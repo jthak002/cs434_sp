@@ -3,7 +3,8 @@ from network import ClientNetwork
 
 def main():
     client = ClientNetwork()
-    client.connect()
+    client.setup()
+    client.client_register('jthak002')
 
 if __name__ == '__main__':
     main()

@@ -15,22 +15,23 @@ message format: (in json):
 		{ 'request' : 'query_users' }
 	***SERVER TO CLIENT***
 		SUCCESS:
-			{'response' : 'query__users', 'error_code' : 'success',  'user_list': ['user1', 'user2', 'user3']}
+			{'response' : 'query_users', 'error_code' : 'success',  'num_users': number,
+			'user_list': [(user1_tuple), (user2_tuple), (user3_tuple)]}
 		FAILURE:
 			{'response' : 'query_users', 'error_code' : 'failure'}
 
 3. follow handles
 	***CLIENT TO SERVER***
-		{ 'request' : 'follow_user', 'username': 'username' }
+		{ 'request' : 'follow_user', 'username_i': username, 'username_j': username }
 	***SERVER TO CLIENT***
 		SUCCESS:
 			{ 'response' : 'follow_user', 'error_code': 'success' }
 		FAILURE: 
 			{ 'response' : 'follow_user', 'error_code': 'failure' }
 
-4. follow handles
+4. drop handles
 	***CLIENT TO SERVER***
-		{ 'request' : 'drop_user', 'username': 'username' }	
+		{ 'request' : 'drop_user', 'username_i': username, 'username_j': username }
 	***SERVER TO CLIENT***
 		SUCCESS:
 			{ 'response' : 'follow_user', 'error_code': 'success' }
