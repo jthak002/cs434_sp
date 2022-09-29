@@ -82,7 +82,7 @@ class ServerNetwork:
                 return basic_response(user_request, is_success)
             elif user_request == "query_users":
                 query_results = self.tracker.query_handles()
-                return query_handle_response(True, query_results[0], query_results[1]["followers"])
+                return query_handle_response(True, query_results[0], query_results[1])
             elif user_request == "follow_user":
                 self.tracker.follow(user_request["username_i"], user_request["username_j"])
                 return basic_response(user_request, True)

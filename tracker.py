@@ -52,7 +52,7 @@ class Tracker:
 
     def get_all_handles(self):
         arr_key = []
-        for key, value in self.handles:
+        for key, value in self.handles.items():
             arr_key.append(key)
 
         return arr_key
