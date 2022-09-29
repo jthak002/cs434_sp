@@ -14,6 +14,8 @@ class ClientNetwork:
     socket_tracker: socket.socket
     socket_peer_left: socket.socket
     socket_peer_right: socket.socket
+    num_users: int
+    user_list: [tuple]
     follower_list: [str]
 
     def __init__(self, host='127.0.0.1', port_tracker=5001, port_peer_left=5002, port_peer_right=5003):
@@ -25,6 +27,8 @@ class ClientNetwork:
         self.port_tracker = port_tracker
         self.port_peer_left = port_peer_left
         self.port_peer_right = port_peer_right
+        self.user_list = []
+        self.num_users = 0
         print(f"Client has been initialized with the IP={self.host}, and ports=[{self.port_tracker},"
               f"{self.port_peer_left},{self.port_peer_right} ]")
 
@@ -80,12 +84,57 @@ class ClientNetwork:
             src_ip = raw_message[1][0]
             src_port = raw_message[1][1]
             if src_ip == TRACKER_URL and src_port == TRACKER_PORT:
-                if json.loads(json_message).get('response') == 'register' and \
+                if json.loads(json_message).get('request') == 'register' and \
                         json.loads(json_message).get('error_code') == 'success':
-                    print("The handle {handle}@{self.host}:{self.port_tracker} has registered successfully!")
-                elif json.loads(json_message).get('response') == 'register' and \
+                    print(f"The handle {handle}@{self.host}:{self.port_tracker} has registered successfully!")
+                elif json.loads(json_message).get('request') == 'register' and \
                         json.loads(json_message).get('error_code') == 'failure':
-                    print("The handle {handle}@{self.host}:{self.port_tracker} received failure message from server")
+                    print(f"The handle {handle}@{self.host}:{self.port_tracker} received failure message from server - "
+                          f"It is probably already registered.")
+                else:
+                    print("received malformed message - printing to console")
+                    print(raw_message)
+            else:
+                print("received unknown message - exiting now")
+        else:
+            print("error case")
+
+    def client_query_handles(self):
+
+        print("Compiling the FOLLOWER REQUEST")
+        dict_message = {'request': 'query_users'}
+        print(f"QUERY_REQUEST=> {dict_message}")
+        binary_request_message = json.dumps(dict_message).encode()
+        print(f"QUERY_REQUEST_BINARY => {binary_request_message}")
+        raw_message = None
+        while True:
+            self.socket_tracker.sendto(binary_request_message, (TRACKER_URL, TRACKER_PORT))
+            print(f"sent QUERY_REQUEST_BINARY to {TRACKER_URL}:{TRACKER_PORT}")
+            self.socket_tracker.settimeout(30)
+            try:
+                raw_message = self.socket_tracker.recvfrom(1024)
+                print(f"Received RAW_MESSAGE={raw_message}")
+            except TimeoutError:
+                print("the previous message to the tracker did not get a response. will try again")
+                continue
+            break
+        if type(raw_message) is tuple and len(raw_message) == 2:
+            json_message = raw_message[0].decode()
+            src_ip = raw_message[1][0]
+            src_port = raw_message[1][1]
+            if src_ip == TRACKER_URL and src_port == TRACKER_PORT:
+                if json.loads(json_message).get('request') == 'query_users' and \
+                        json.loads(json_message).get('error_code') == 'success':
+                    self.num_users = json.loads(json_message).get('num_users', 0)
+                    print(f"number of users online => {self.num_users}")
+                    self.user_list = json.loads(json_message).get('user_list', [])
+                    print_string = "The list of users is:\n"
+                    for user in self.user_list:
+                        print_string = print_string + user + '\n'
+                    print(print_string)
+                elif json.loads(json_message).get('request') == 'query_users' and \
+                        json.loads(json_message).get('error_code') == 'failure':
+                    print("Tracker responded with a failure message when querying users.")
                 else:
                     print("received malformed message - printing to console")
                     print(raw_message)
