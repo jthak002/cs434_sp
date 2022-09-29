@@ -25,10 +25,12 @@ class ServerNetwork:
         # packets are unorganized.
         # https://stackoverflow.com/questions/8194323/why-the-listen-function-call-is-not-needed-when-use-udp-socket
         # self.server_side_socket.listen(5)
-        print('Server has started... Socket is listening...')
+        print("Server has started... Socket is listening...")
 
     # Get message from client
     def server_recv_mesg(self, test_timeout=-1):
+        print()
+        print("==========================================")
         print("Waiting for message")
         raw_msg = self.server_side_socket.recvfrom(1024)
         print(raw_msg)
@@ -52,11 +54,16 @@ class ServerNetwork:
             elif user_request == "query_users":
                 pass
             elif user_request == "follow_user":
-                key_array = ['username']
+                key_array = ['username_i', 'username_j']
                 for key_check in key_array:
                     if message_dict[key_check] is None:
                         raise json.JSONDecodeError
             elif user_request == "drop_user":
+                key_array = ['username_i', 'username_j']
+                for key_check in key_array:
+                    if message_dict[key_check] is None:
+                        raise json.JSONDecodeError
+            elif user_request == "exit":
                 key_array = ['username']
                 for key_check in key_array:
                     if message_dict[key_check] is None:
@@ -79,9 +86,18 @@ class ServerNetwork:
                                       json_message['tracker_port'], json_message['peer_port_left'],
                                       json_message['peer_port_right'])
 
+                if is_success:
+                    print("@" + json_message['handle'] + " has been successfully registered!")
+                else:
+                    print("@" + json_message['handle'] + " failed to register!")
+
                 return basic_response(user_request, is_success)
             elif user_request == "query_users":
                 query_results = self.tracker.query_handles()
+
+                if query_results is not None:
+                    print("Query Handle successfully generated!")
+
                 return query_handle_response(True, query_results[0], query_results[1])
             elif user_request == "follow_user":
                 self.tracker.follow(user_request["username_i"], user_request["username_j"])
@@ -89,16 +105,18 @@ class ServerNetwork:
             elif user_request == "drop_user":
                 self.tracker.follow(user_request["username_i"], user_request["username_j"])
                 return basic_response(user_request, True)
+            elif user_request == "exit":
+                self.tracker.exit(user_request["username"])
+                return basic_response(user_request, True)
             else:
-                print("server_route_mesg found malformed JSON. dropping packet.")
+                print("Invalid user request found in JSON! dropping packet...")
         else:
-            print("server_route_mesg found malformed JSON. dropping packet.")
+            print("No user request is found in JSON! dropping packet...")
 
         return basic_response(user_request, False)
 
     # Send message to client
     def server_send(self, source_ip: str, source_port: int, message: bytes):
-
         self.server_side_socket.sendto(json.dumps(message).encode(), (source_ip, source_port))
 
     def server_conn_close(self):

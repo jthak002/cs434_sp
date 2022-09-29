@@ -34,6 +34,27 @@ message format: (in json):
 		{ 'request' : 'drop_user', 'username_i': username, 'username_j': username }
 	***SERVER TO CLIENT***
 		SUCCESS:
-			{ 'request' : 'follow_user', 'error_code': 'success' }
+			{ 'request' : 'drop_user', 'error_code': 'success' }
 		FAILURE:
-			{ 'request' : 'follow_user', 'error_code': 'failure' }
+			{ 'request' : 'drop_user', 'error_code': 'failure' }
+
+5. tweet
+    ***CLIENT TO SERVER***
+    ***SERVER TO CLIENT***
+        SUCCESS:
+		FAILURE:
+
+6. end tweet
+    ***CLIENT TO SERVER***
+    ***SERVER TO CLIENT***
+        SUCCESS:
+		FAILURE:
+
+7. exit
+    ***CLIENT TO SERVER***
+        { 'request' : 'exit', 'username': username }
+    ***SERVER TO CLIENT***
+        SUCCESS:
+            { 'request' : 'exit', 'error_code': 'success' }
+		FAILURE:
+            { 'request' : 'exit', 'error_code': 'success' }
