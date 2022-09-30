@@ -7,17 +7,14 @@ class Tracker:
 
     # register @<handle> <IPv4-address> <port>
     def register(self, handle, source_ip, tracker_port, peer_port_left, peer_port_right):
-        arr_handles = self.get_all_handles()
-        for curr_handle in arr_handles:
-            if handle == curr_handle:
-                print("Handle already exist in the database!")
-                return False
-
-        self.number_of_users += 1
-        self.handles[handle] = {"source_ip": source_ip, "tracker_port": tracker_port, "peer_port_left": peer_port_left,
-                                "peer_port_right": peer_port_right, "follower": []}
-
-        return True
+        if not self.check_and_verify(handle, source_ip, (tracker_port, peer_port_left, peer_port_right)):
+            self.number_of_users += 1
+            self.handles[handle] = {"source_ip": source_ip, "port": (tracker_port, peer_port_left, peer_port_right),
+                                    "follower": []}
+            return True
+        else:
+            print("Handle already exist in the database!")
+            return False
 
     def query_handles(self):
         arr_handles = self.get_all_handles()
@@ -70,3 +67,15 @@ class Tracker:
             arr_key.append(key)
 
         return arr_key
+
+    def check_and_verify(self, username, ip=None, port=None):
+        if username in self.handles:
+            if ip and port:
+                return ip == self.handles[username]['source_ip'] and port == self.handles[username]['port'][0]
+            elif ip or port:
+                return False
+            # Check if client exist in dictionary
+            else:
+                return True
+        else:
+            return False

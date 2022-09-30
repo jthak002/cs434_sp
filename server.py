@@ -24,7 +24,7 @@ def main():
 
             # tracker code that uses the json message to respond to user goes here
             # Parsing client request
-            dict_res = server.server_route_mesg(dict_message)
+            dict_res = server.server_route_mesg(dict_message, src_ip, src_port)
             server.server_send(message=dict_res, source_ip=src_ip, source_port=src_port)
 
     except KeyboardInterrupt:

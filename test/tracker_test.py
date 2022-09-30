@@ -3,13 +3,6 @@ from tracker import Tracker
 
 
 def main():
-    client = ClientNetwork()
-    client.setup()
-    client.client_register('jthak002')
-    client.client_register('isahoo1')
-    client.client_register('jthak002')
-    client.client_query_handles()
-
     # Test
     tracker = Tracker()
 
@@ -17,6 +10,7 @@ def main():
     tracker.register("jason", "192.0.0.1", 5000, 5001, 5002)
     tracker.register("ben", "192.0.0.2", 5003, 5004, 5005)
     tracker.register("mary", "192.0.0.3", 5006, 5007, 5008)
+    tracker.get_all_ports()
 
     # Test Follow
     tracker.follow("jason", "ben")

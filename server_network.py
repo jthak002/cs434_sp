@@ -77,7 +77,7 @@ class ServerNetwork:
 
         return message_dict
 
-    def server_route_mesg(self, json_message: dict):
+    def server_route_mesg(self, json_message: dict, src_ip, src_port):
         user_request = json_message.get('request', None)
 
         if user_request:
@@ -100,14 +100,34 @@ class ServerNetwork:
 
                 return query_handle_response(True, query_results[0], query_results[1])
             elif user_request == "follow_user":
-                self.tracker.follow(json_message.get("username_i", None), json_message.get("username_j", None))
-                return basic_response(user_request, True)
+                if self.tracker.check_and_verify(json_message.get("username_i", None), src_ip, src_port):
+                    if json_message.get("username_i", None) == json_message.get("username_j", None):
+                        print("Users cannot follow themself!")
+                        return basic_response(user_request, False)
+
+                    self.tracker.follow(json_message.get("username_i", None), json_message.get("username_j", None))
+                    return basic_response(user_request, True)
+                else:
+                    print("User source IP and source Port do not match username - IMPERSONATION")
+                    return basic_response(user_request, False)
             elif user_request == "drop_user":
-                self.tracker.follow(json_message.get("username_i", None), json_message.get("username_j", None))
-                return basic_response(user_request, True)
+                if self.tracker.check_and_verify(json_message.get("username_i", None), src_ip, src_port):
+                    if json_message.get("username_i", None) == json_message.get("username_j", None):
+                        print("Given username are the same. Please enter 2 different usernames!")
+                        return basic_response(user_request, False)
+
+                    self.tracker.follow(json_message.get("username_i", None), json_message.get("username_j", None))
+                    return basic_response(user_request, True)
+                else:
+                    print("User source IP and source Port do not match username - IMPERSONATION")
+                    return basic_response(user_request, False)
             elif user_request == "exit":
-                self.tracker.exit(json_message.get("username", None))
-                return basic_response(user_request, True)
+                if self.tracker.check_and_verify(json_message.get("username", None), src_ip, src_port):
+                    self.tracker.exit(json_message.get("username", None))
+                    return basic_response(user_request, True)
+                else:
+                    print("User source IP and source Port do not match username - IMPERSONATION")
+                    return basic_response(user_request, False)
             else:
                 print("Invalid user request found in JSON! dropping packet...")
         else:
