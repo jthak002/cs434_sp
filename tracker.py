@@ -7,11 +7,15 @@ class Tracker:
 
     # register @<handle> <IPv4-address> <port>
     def register(self, handle, source_ip, tracker_port, peer_port_left, peer_port_right):
-        if not self.check_and_verify(handle, source_ip, (tracker_port, peer_port_left, peer_port_right)):
-            self.number_of_users += 1
-            self.handles[handle] = {"source_ip": source_ip, "port": (tracker_port, peer_port_left, peer_port_right),
-                                    "follower": []}
-            return True
+        if not self.check_username_exist(handle):
+            if not self.check_ip_port_exist(source_ip, tracker_port):
+                self.number_of_users += 1
+                self.handles[handle] = {"source_ip": source_ip, "port": (tracker_port, peer_port_left, peer_port_right),
+                                        "follower": []}
+                return True
+            else:
+                print("Please do not try to register multiple users from a single client!")
+                return False
         else:
             print("Handle already exist in the database!")
             return False
@@ -27,8 +31,10 @@ class Tracker:
             self.handles[follow_user_handle]["follower"].append(curr_user_handle)
             self.handles[follow_user_handle]["follower"].sort()
             print("@" + curr_user_handle + " has successfully followed @" + follow_user_handle)
+            return True
         else:
             print("@" + curr_user_handle + " has already followed @" + follow_user_handle)
+            return False
 
     # drop @<handlei> @<handlej>
     def drop(self, curr_user_handle, follow_user_handle):
@@ -68,14 +74,15 @@ class Tracker:
 
         return arr_key
 
-    def check_and_verify(self, username, ip=None, port=None):
-        if username in self.handles:
-            if ip and port:
-                return ip == self.handles[username]['source_ip'] and port == self.handles[username]['port'][0]
-            elif ip or port:
-                return False
-            # Check if client exist in dictionary
-            else:
+    def check_username_exist(self, username):
+        return username in self.handles
+
+    def check_ip_port_exist(self, ip, port):
+        for key, value in self.handles.items():
+            if ip == value['source_ip'] and port == value['port'][0]:
                 return True
-        else:
-            return False
+
+        return False
+
+    def check_and_verify(self, username, ip=None, port=None):
+        return ip == self.handles[username]['source_ip'] and port == self.handles[username]['port'][0]
