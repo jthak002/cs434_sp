@@ -100,13 +100,13 @@ class ServerNetwork:
 
                 return query_handle_response(True, query_results[0], query_results[1])
             elif user_request == "follow_user":
-                self.tracker.follow(user_request["username_i"], user_request["username_j"])
+                self.tracker.follow(json_message.get("username_i", None), json_message.get("username_j", None))
                 return basic_response(user_request, True)
             elif user_request == "drop_user":
-                self.tracker.follow(user_request["username_i"], user_request["username_j"])
+                self.tracker.follow(json_message.get("username_i", None), json_message.get("username_j", None))
                 return basic_response(user_request, True)
             elif user_request == "exit":
-                self.tracker.exit(user_request["username"])
+                self.tracker.exit(json_message.get("username", None))
                 return basic_response(user_request, True)
             else:
                 print("Invalid user request found in JSON! dropping packet...")
