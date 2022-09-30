@@ -223,6 +223,45 @@ class ClientNetwork:
         else:
             print("error case")
 
+    def client_exit_handle(self):
+        if self.handle == '':
+            print("user has not registered yet - can exit cleanly.")
+            return
+        dict_message = {'request': 'exit_user', 'username': self.handle}
+        print(f"Compiling the EXIT HANDLE REQUEST=> {dict_message}")
+        binary_request_message = json.dumps(dict_message).encode()
+        raw_message = None
+        while True:
+            self.socket_tracker.sendto(binary_request_message, (TRACKER_URL, TRACKER_PORT))
+            print(f"sentEXIT_REQUEST to {TRACKER_URL}:{TRACKER_PORT}")
+            self.socket_tracker.settimeout(30)
+            try:
+                raw_message = self.socket_tracker.recvfrom(1024)
+                print(f"Received RAW_MESSAGE={raw_message}")
+            except TimeoutError:
+                print("the previous message to the tracker did not get a response. will try again")
+                continue
+            break
+        if type(raw_message) is tuple and len(raw_message) == 2:
+            json_message = raw_message[0].decode()
+            src_ip = raw_message[1][0]
+            src_port = raw_message[1][1]
+            if src_ip == TRACKER_URL and src_port == TRACKER_PORT:
+                print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+                if json.loads(json_message).get('request') == 'exit_user' and \
+                        json.loads(json_message).get('error_code') == 'success':
+                    print(f'@{self.handle} request to exit @{self.handle}was processed by the tracker successfully')
+                elif json.loads(json_message).get('request') == 'drop_users' and \
+                        json.loads(json_message).get('error_code') == 'failure':
+                    print(f"Tracker responded with a failure message when exiting @{self.handle}")
+                else:
+                    print("received malformed message - printing to console")
+                    print(raw_message)
+            else:
+                print("received unknown message - exiting now")
+        else:
+            print("error case")
+
     def close(self):
         self.socket_tracker.close()
         self.socket_peer_left.close()

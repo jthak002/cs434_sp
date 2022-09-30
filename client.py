@@ -36,6 +36,8 @@ def interactive_function():
     elif input_cmd.strip() == 'back':
         return
     elif input_cmd.strip() == 'exit':
+        client.client_exit_handle()
+        client.close()
         exit(0)
     else:
         print("invalid command - try again.")
