@@ -57,4 +57,4 @@ message format: (in json):
         SUCCESS:
             { 'request' : 'exit', 'error_code': 'success' }
 		FAILURE:
-            { 'request' : 'exit', 'error_code': 'success' }
+            { 'request' : 'exit', 'error_code': 'failure' }

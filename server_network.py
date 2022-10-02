@@ -118,7 +118,7 @@ class ServerNetwork:
                         print("Given username are the same. Please enter 2 different usernames!")
                         return basic_response(user_request, False)
 
-                    self.tracker.follow(json_message.get("username_i", None), json_message.get("username_j", None))
+                    self.tracker.drop(json_message.get("username_i", None), json_message.get("username_j", None))
                     return basic_response(user_request, True)
                 else:
                     print("User source IP and source Port do not match username - IMPERSONATION")

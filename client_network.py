@@ -227,7 +227,7 @@ class ClientNetwork:
         if self.handle == '':
             print("user has not registered yet - can exit cleanly.")
             return
-        dict_message = {'request': 'exit_user', 'username': self.handle}
+        dict_message = {'request': 'exit', 'username': self.handle}
         print(f"Compiling the EXIT HANDLE REQUEST=> {dict_message}")
         binary_request_message = json.dumps(dict_message).encode()
         raw_message = None
