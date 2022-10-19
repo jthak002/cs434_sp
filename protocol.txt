@@ -40,7 +40,7 @@ message format: (in json):
 
 5. tweet
     ***CLIENT TO NEXT_CLIENT***
-        {'request': 'create_chain', 'chain_owner': <owner_name>, 'network_hash': <md5_hash>, 'tweet_content': 'string',
+        {'request': 'create_chain', 'chain_owner': (owner_tuple), tweet': 'string',
         'user_list': [(user_1 tuple), (user_2 tuple), (user_3 tuple), ]
         SUCCESS:
             {'request': 'create_chain', 'error_code': 'success' }

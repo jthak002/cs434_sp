@@ -13,11 +13,18 @@ class LogicalNetwork(object):
     left_socket: socket.socket
     right_socket: socket.socket
     hostname: str
+    port_tracker: int
+    port_left: int
+    port_right: int
 
-    def __init__(self, left_socket, right_socket, hostname):
+    def __init__(self, left_socket, right_socket, hostname, port_tracker, port_left, port_right):
         self.left_socket = left_socket
         self.right_socket = right_socket
         self.hostname = hostname
+        self.port_tracker = port_tracker
+        self.port_left = port_left
+        self.port_right = port_right
+        self._tuple = (hostname, port_tracker, port_left, port_right)
 
     @staticmethod
     def _send_success_message(snd_socket: socket.socket, for_request: str, destination: str, port: int, success=True,
@@ -30,12 +37,12 @@ class LogicalNetwork(object):
 
     def tweet_message(self, message_string: str, follower_list: []):
         # 1. Send the tweet down the chain to be propagated.
-        dict_message = {'request': 'send_tweet', 'chain_owner': self.hostname,
-                        'follower_list': follower_list}
+        dict_message = {'request': 'send_tweet', 'chain_owner': self._tuple, 'follower_list': follower_list,
+                        'tweet': message_string}
         print(f"Compiling the SEND_TWEET REQUEST=> {dict_message}")
         binary_request = json.dumps(dict_message).encode()
         raw_message = None
-        next_peer = self.find_left_neighbor(follower_list)
+        next_peer = self.find_left_neighbor(follower_list=follower_list, my_list=True)
         while True:
             self.left_socket.sendto(binary_request, (next_peer[0], next_peer[2]))
             self.left_socket.settimeout(30)
@@ -78,7 +85,7 @@ class LogicalNetwork(object):
                 prop_confirm = self.right_socket.recvfrom(1024)
                 prop_confirm_message = json.loads(prop_confirm[0].decode())
                 if prop_confirm_message.get('request', None) == 'send_tweet':
-                    if prop_confirm_message.get('chain_owner', None) == self.hostname:
+                    if prop_confirm_message.get('chain_owner', None)[0] == self.hostname:
                         print('TWEET PROPAGATED SUCCESSFULLY!')
                         LogicalNetwork._send_success_message(for_request='send_tweet',
                                                              success=True, destination=prop_confirm[1][0],
@@ -104,8 +111,10 @@ class LogicalNetwork(object):
         tweet_payload = json.loads(message.decode())
         if tweet_payload.get('request', None) == 'send_tweet':
             try:
-                tweet_text =
-                next_peer =
+                tweet_text = tweet_payload.get('tweet')
+                next_peer = self.find_left_neighbor(tweet_payload.get('follower_list'))
+                chain_owner = tweet_payload.get('chain_owner')[]
+                print("####TWEET BY ")
             except KeyError:
                 print(f"One of the keys required in the message was missing. {sys.exc_info()}")
 
@@ -115,20 +124,35 @@ class LogicalNetwork(object):
 
         pass
 
-    def find_left_neighbor(self, tuple_list):
-        next_tuple = None
-        for index in range(0, len(tuple_list)):
-            if tuple_list[index][0] is self.hostname:
-                return next_tuple if next_tuple is not None else tuple_list[1]
-            else:
-                next_tuple = user_tuple[index + 1]
+    def find_left_neighbor(self, follower_list, my_list=False):
+        # for the owner of the follower list the left neighbor will be the 1st person in
+        # the alphabetically sorted list
+        if my_list:
+            return follower_list[0] if len(follower_list > 0) else None
+        # for everyone else navigating the list.
+        for index in range(0, len(follower_list)):
+            if follower_list[index][0] is self.hostname:
+                # for the last person on any follower list, the left neighbor will be the owner in that list.
+                if index is len(follower_list) - 1:
+                    return self._tuple
+                # for everyone else it will be the next person in the list
+                else:
+                    return follower_list[index + 1]
+        # error case
+        print("error_case: traversed whole follower_list but did not find the left_neighbor.")
         return None
 
-    def find_right_neighbor(self, tuple_list):
-        next_tuple = None
-        for user_tuple in tuple_list:
+    def find_right_neighbor(self, follower_list: list[tuple[str, int, int]], my_list=False):
+        # for the owner of the follower list the right neighbor will be the last person in
+        # the alphabetically sorted list
+        if my_list:
+            return follower_list[-1] if len(follower_list) > 0 else None
+        prev_tuple = self._tuple
+        for user_tuple in follower_list:
             if user_tuple[0] is self.hostname:
-                return prev_tuple if prev_tuple is not None else tuple_list[-1]
+                return prev_tuple if prev_tuple is not None else follower_list[-1]
             else:
                 prev_tuple = user_tuple
+        # error case
+        print("error_case: traversed whole follower_list but did not find the right_neighbor.")
         return None
