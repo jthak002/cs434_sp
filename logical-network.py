@@ -26,6 +26,7 @@ class LogicalNetwork(object):
         self.port_right = port_right
         self._tuple = (hostname, port_tracker, port_left, port_right)
 
+    # Support functions
     @staticmethod
     def _send_success_message(snd_socket: socket.socket, for_request: str, destination: str, port: int, success=True,
                               additional_args=None):
@@ -35,6 +36,41 @@ class LogicalNetwork(object):
                 dict_message[key] = value
         snd_socket.sendto(json.dumps(dict_message).encode(), (destination, port))
 
+    # Logical Ring Functions
+    def find_left_neighbor(self, follower_list, my_list=False):
+        # for the owner of the follower list the left neighbor will be the 1st person in
+        # the alphabetically sorted list
+        if my_list:
+            return follower_list[0] if len(follower_list > 0) else None
+        # for everyone else navigating the list.
+        for index in range(0, len(follower_list)):
+            if follower_list[index][0] is self.hostname:
+                # for the last person on any follower list, the left neighbor will be the owner in that list.
+                if index is len(follower_list) - 1:
+                    return self._tuple
+                # for everyone else it will be the next person in the list
+                else:
+                    return follower_list[index + 1]
+        # error case
+        print("error_case: traversed whole follower_list but did not find the left_neighbor.")
+        return None
+
+    def find_right_neighbor(self, follower_list: list[tuple[str, int, int]], my_list=False):
+        # for the owner of the follower list the right neighbor will be the last person in
+        # the alphabetically sorted list
+        if my_list:
+            return follower_list[-1] if len(follower_list) > 0 else None
+        prev_tuple = self._tuple
+        for user_tuple in follower_list:
+            if user_tuple[0] is self.hostname:
+                return prev_tuple if prev_tuple is not None else follower_list[-1]
+            else:
+                prev_tuple = user_tuple
+        # error case
+        print("error_case: traversed whole follower_list but did not find the right_neighbor.")
+        return None
+
+    # Tweet Actions
     def tweet_message(self, message_string: str, follower_list: []):
         # 1. Send the tweet down the chain to be propagated.
         dict_message = {'request': 'send_tweet', 'chain_owner': self._tuple, 'follower_list': follower_list,
@@ -109,50 +145,30 @@ class LogicalNetwork(object):
             recv_tweet = self.right_socket.recvfrom(1024)
             message = recv_tweet
         tweet_payload = json.loads(message.decode())
+        next_peer = None
+        tweet_text = None
+        mesg_sender = None
         if tweet_payload.get('request', None) == 'send_tweet':
             try:
-                tweet_text = tweet_payload.get('tweet')
+                mesg_sender = tweet_payload.get('chain_owner')
+                tweet_text = tweet_payload.get('tweet_content', None)
                 next_peer = self.find_left_neighbor(tweet_payload.get('follower_list'))
-                chain_owner = tweet_payload.get('chain_owner')[]
-                print("####TWEET BY ")
             except KeyError:
                 print(f"One of the keys required in the message was missing. {sys.exc_info()}")
-
+            while True:
+                self.left_socket.sendto(message, (next_peer[0], next_peer[2]))
+                self.left_socket.settimeout(30)
+                try:
+                    raw_message = self.left_socket.recvfrom(1024)
+                    print(f'received raw_message = {raw_message}')
+                    if self._verify_success_response(request_type='send_tweet', raw_message=raw_message):
+                        self._print_tweet(message=tweet_text, src_ip=mesg_sender[0], src_port=mesg_sender[1])
+                        break
+                    else:
+                        continue
+                except TimeoutError:
+                    print(f"the previous message to the peer {next_peer[0]}:{next_peer[1]} did not get a response. "
+                          f"will try again")
+                    continue
         else:
             print("received a malformed message.")
-
-
-        pass
-
-    def find_left_neighbor(self, follower_list, my_list=False):
-        # for the owner of the follower list the left neighbor will be the 1st person in
-        # the alphabetically sorted list
-        if my_list:
-            return follower_list[0] if len(follower_list > 0) else None
-        # for everyone else navigating the list.
-        for index in range(0, len(follower_list)):
-            if follower_list[index][0] is self.hostname:
-                # for the last person on any follower list, the left neighbor will be the owner in that list.
-                if index is len(follower_list) - 1:
-                    return self._tuple
-                # for everyone else it will be the next person in the list
-                else:
-                    return follower_list[index + 1]
-        # error case
-        print("error_case: traversed whole follower_list but did not find the left_neighbor.")
-        return None
-
-    def find_right_neighbor(self, follower_list: list[tuple[str, int, int]], my_list=False):
-        # for the owner of the follower list the right neighbor will be the last person in
-        # the alphabetically sorted list
-        if my_list:
-            return follower_list[-1] if len(follower_list) > 0 else None
-        prev_tuple = self._tuple
-        for user_tuple in follower_list:
-            if user_tuple[0] is self.hostname:
-                return prev_tuple if prev_tuple is not None else follower_list[-1]
-            else:
-                prev_tuple = user_tuple
-        # error case
-        print("error_case: traversed whole follower_list but did not find the right_neighbor.")
-        return None
