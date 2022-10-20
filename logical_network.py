@@ -36,6 +36,9 @@ class LogicalNetwork(object):
                 dict_message[key] = value
         snd_socket.sendto(json.dumps(dict_message).encode(), (destination, port))
 
+    def _verify_sender(self, message_sender_tuple: tuple[str, int], addressee_tuple: tuple[str, int]):
+        return message_sender_tuple[0] == addressee_tuple[0] and message_sender_tuple[1] == addressee_tuple[1]
+
     def _verify_success_response(self, request_type: str, raw_message: tuple[b'', tuple[str, int,]]):
         try:
             mesg_payload = json.loads(raw_message[0].decode())
@@ -102,34 +105,25 @@ class LogicalNetwork(object):
             try:
                 raw_message = self.left_socket.recvfrom(1024)
                 print(f'received raw_message = {raw_message}')
+                verify_status = self._verify_success_response(raw_message=raw_message, request_type='send_tweet')
+                verify_sender = self._verify_sender(message_sender_tuple=raw_message[1], addressee_tuple=(next_peer[0],
+                                                                                                          next_peer[2]))
+                if verify_status and verify_sender:
+                    pass
+                else:
+                    if verify_status:
+                        print("SEND_TWEET received a success message from another source than expected.")
+                        continue
+                    if verify_sender:
+                        print("SEND_TWEET received a message from another message than what was expected.")
+                    print(f"SEND_TWEET: DEBUG: {raw_message}")
+                    continue
             except TimeoutError:
                 print(f"the previous message to the peer {next_peer[0]}:{next_peer[1]} did not get a response. "
                       f"will try again")
                 continue
             break
-        # 2. Checking if the peer to whom the tweet was sent to received it successfully.
-        if type(raw_message) is tuple and len(raw_message) == 2:
-            json_message = raw_message[0].decode()
-            src_ip = raw_message[1][0]
-            src_port = raw_message[1][1]
-            if src_ip == next_peer[0] and src_port == next_peer[2]:
-                # Sanity check - making sure response came from next peer
-                print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-                if json.loads(json_message).get('request') == 'send_tweet' and \
-                        json.loads(json_message).get('error_code') == 'success':
-                    pass
-                elif json.loads(json_message).get('request') == 'send_tweet' and \
-                        json.loads(json_message).get('error_code') == 'failure':
-                    print("Could not send the tweet to the next peer in line.")
-                    return
-                else:
-                    print("received malformed message - printing to console")
-                    print(raw_message)
-            else:
-                print("received message from unknown source - exiting now")
-        else:
-            print("error_case: the data picked from UDP wasn't valid UDP Tuple response.")
-        # 3. listening on the right port if the last peer in line sends a correct response. Will wait
+        # 2. listening on the right port if the last peer in line sends a correct response. Will wait
         # PROPAGATION_TIMEOUT mins
         self.right_socket.settimeout(PROPAGATION_TIMEOUT)
         retries = 0
@@ -138,7 +132,9 @@ class LogicalNetwork(object):
                 prop_confirm = self.right_socket.recvfrom(1024)
                 prop_confirm_message = json.loads(prop_confirm[0].decode())
                 if prop_confirm_message.get('request', None) == 'send_tweet':
-                    if prop_confirm_message.get('chain_owner', None)[0] == self.hostname:
+                    chain_owner_tuple = prop_confirm_message.get('chain_owner', (None, None, None, None))
+                    if chain_owner_tuple[0] == self._tuple[0] and chain_owner_tuple[1] == self._tuple[1] and \
+                            chain_owner_tuple[2] == self._tuple[2] and chain_owner_tuple[3] == self._tuple[3]:
                         print('TWEET PROPAGATED SUCCESSFULLY!')
                         LogicalNetwork._send_success_message(for_request='send_tweet',
                                                              success=True, destination=prop_confirm[1][0],
@@ -147,21 +143,25 @@ class LogicalNetwork(object):
                     else:
                         print("Received a TWEET message with another "
                               "`chain_owner`: {}.".format(prop_confirm_message.get('chain_owner', None)))
-                        #
-                        # wip: process this after the current tweet has propagated.
-                        self.process_and_forward_tweet(bypass_recv=True, message=prop_confirm_message)
+                        # todo: process this tweet from another user.
+                        self.process_and_forward_tweet(bypass_recv=True, raw_message=prop_confirm)
                         continue
                 else:
                     print(f"Received an unexpected message AFTER SEND_TWEET: {prop_confirm}")
             except TimeoutError:
                 pass
 
-    def process_and_forward_tweet(self, bypass_recv=False, message=None):
+    def process_and_forward_tweet(self, bypass_recv=False, raw_message: tuple[b'', tuple[str, int]] = None,
+                                  tweet_recv_timeout: int = 5):
+        recv_tweet = None
         if not bypass_recv:
-            self.right_socket.settimeout(5)
-            recv_tweet = self.right_socket.recvfrom(1024)
-            message = recv_tweet
-        tweet_payload = json.loads(message.decode())
+            try:
+                self.right_socket.settimeout(tweet_recv_timeout)
+                recv_tweet = self.right_socket.recvfrom(1024)
+            except TimeoutError:
+                return
+        message = raw_message if bypass_recv else recv_tweet
+        tweet_payload = json.loads(message[0].decode())
         next_peer = None
         tweet_text = None
         mesg_sender = None
