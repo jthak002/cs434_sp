@@ -21,10 +21,9 @@ class ServerNetwork:
             self.server_side_socket.bind((self.host, self.port))
         except socket.error as e:
             print(str(e))
-        # Note to Wei: We do not use the socket.listen() class for UDP connections because the protocol is stateless and
+        # Do not use the socket.listen() class for UDP connections because the protocol is stateless and
         # packets are unorganized.
         # https://stackoverflow.com/questions/8194323/why-the-listen-function-call-is-not-needed-when-use-udp-socket
-        # self.server_side_socket.listen(5)
         print("Server has started... Socket is listening...")
 
     # Get message from client
@@ -63,6 +62,16 @@ class ServerNetwork:
                 for key_check in key_array:
                     if message_dict[key_check] is None:
                         raise json.JSONDecodeError
+            elif user_request == "create_chain":
+                # While the user is creating the tweet, we just need to provide the follower list to
+                # the user and set a timeout to ensure that the end tweet is received before the server
+                # can process any request. Because there is a case where you need to ensure that no one
+                # can exit especially those that are part of the logical ring.
+                #
+                # While doing that, you also need to ensure that any incoming message during that timeout
+                # that are not part of the logical ring, is added to a message queue. Do also note that
+                # the message queue can drop message if the buffer size exceeds.
+                pass
             elif user_request == "exit":
                 key_array = ['username']
                 for key_check in key_array:
