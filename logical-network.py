@@ -36,6 +36,23 @@ class LogicalNetwork(object):
                 dict_message[key] = value
         snd_socket.sendto(json.dumps(dict_message).encode(), (destination, port))
 
+    def _verify_success_response(self, request_type: str, raw_message: tuple[b'', tuple[str, int,]]):
+        try:
+            mesg_payload = json.loads(raw_message[0].decode())
+            mesg_request_type = mesg_payload.get('request')
+            mesg_request_bool = True if mesg_request_type == request_type else False
+            error_code = mesg_payload.get('error_code')
+            error_code_bool = True if error_code == 'success' else False
+            return mesg_request_bool and error_code_bool
+        except KeyError:
+            print("encountered malformed message while checking verifying success response of message")
+            return False
+
+    def _print_tweet(self, message: str, src_ip: str, src_port:int):
+        print(f"#########{src_ip}@{src_port} TWEETED#########")
+        print(message)
+        print("#############################################")
+
     # Logical Ring Functions
     def find_left_neighbor(self, follower_list, my_list=False):
         # for the owner of the follower list the left neighbor will be the 1st person in
