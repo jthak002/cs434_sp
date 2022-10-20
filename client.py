@@ -6,18 +6,19 @@ register_rexp = re.compile('^register [a-zA-Z0-9]{1,15}$')
 query_rexp = re.compile('^query users$')
 follow_rexp = re.compile('^follow [a-zA-Z0-9]{1,15}\ [a-zA-Z0-9]{1,15}$')
 drop_rexp = re.compile('^drop [a-zA-Z0-9]{1,15}$')
+tweet_rexp = re.compile('^tweet [a-zA-Z0-9]{1,140}$')
 
 client: ClientNetwork
 
 
 def non_interactive_function():
-    pass
+    client.client_wait_for_tweet()
 
 
 def interactive_function():
     print('\n=============INTERACTIVE_MODE=============')
     input_cmd = input("enter the command:\n1. register <handle>\n2. query users\n3. follow <user_i> <user_j>\n"
-                      "4. drop <user>\n5. back\n6. exit\n")
+                      "4. drop <user>\n5. tweet\n6. back\n7. exit\n")
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     if register_rexp.match(input_cmd.strip()):
         handle = input_cmd.split()[1]
@@ -33,6 +34,8 @@ def interactive_function():
         handle = input_cmd.split()[1]
         client.client_drop_handle(handle)
         return
+    elif drop_rexp.match(input_cmd.strip()):
+        tweet_message = input_cmd.split()
     elif input_cmd.strip() == 'back':
         return
     elif input_cmd.strip() == 'exit':

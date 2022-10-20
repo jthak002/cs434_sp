@@ -40,15 +40,29 @@ message format: (in json):
 
 5. tweet
     ***CLIENT TO SERVER***
+        {'request': 'send_tweet', 'handle': (client_handle)}
+        SUCCESS:
+            {'request': 'send_tweet', 'error_code': 'success' }
+        FAILURE:
+            {'request': 'send_tweet', 'error_code': 'failure' }
+    ***WAIT FOR CLIENT TO CONFIRM THAT TWEET PROPOGATED***
+        {'request': 'end_tweet', 'handle': (client_handle)}
+        SUCCESS:
+            {'request': 'end_tweet', 'error_code': 'success' }
+        FAILURE:
+            {'request': 'end_tweet', 'error_code': 'failure' }
+
+    ***CLIENT TO NEXT_CLIENT***
+        {'request': 'send_tweet', 'chain_owner': (owner_tuple), tweet': 'string',
+        'user_list': [(user_1 tuple), (user_2 tuple), (user_3 tuple), ]
+        SUCCESS:
+            {'request': 'create_chain', 'error_code': 'success' }
+        FAILURE:
+            {'request': 'create_chain', 'error_code': 'failure' }
     ***SERVER TO CLIENT***
         SUCCESS:
 		FAILURE:
 
-6. end tweet
-    ***CLIENT TO SERVER***
-    ***SERVER TO CLIENT***
-        SUCCESS:
-		FAILURE:
 
 7. exit
     ***CLIENT TO SERVER***
