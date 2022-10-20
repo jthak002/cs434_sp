@@ -273,6 +273,7 @@ class ClientNetwork:
             print("cannot tweet w/o registering. please register before sending the `tweet` command")
             return
         print(f"-->Fetching the list of followers for {self.handle} by issuing the query_handles command.")
+        self.client_query_handles()
         self.logic_network.tweet_message(message_string=tweet_message, follower_list=self.follower_list)
 
     def client_wait_for_tweet(self, wait_timeout: int = 5):
