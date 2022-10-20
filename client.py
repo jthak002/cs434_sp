@@ -11,7 +11,7 @@ client: ClientNetwork
 
 
 def non_interactive_function():
-    pass
+    client.client_wait_for_tweet()
 
 
 def interactive_function():

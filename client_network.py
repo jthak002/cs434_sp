@@ -1,6 +1,7 @@
 import os
 import socket
 import json
+from logical_network import LogicalNetwork
 
 TRACKER_URL = os.getenv('TRACKER_URL','127.0.0.1')
 TRACKER_PORT = int(os.getenv('TRACKER_PORT', '5000'))
@@ -18,6 +19,7 @@ class ClientNetwork:
     user_list: [tuple]
     follower_list: [str]
     handle: str
+    logic_network: LogicalNetwork
 
     def __init__(self, host='127.0.0.1', port_tracker=5001, port_peer_left=5002, port_peer_right=5003):
         print("Initializing the client")
@@ -59,6 +61,10 @@ class ClientNetwork:
                   f"please try another port.")
             exit(1)
         print("bind successful!")
+        print("Setup the LogicalNetwork Object for this client -->")
+        self.logic_network = LogicalNetwork(hostname=self.host, port_tracker=self.port_tracker,
+                                            port_left=self.port_peer_left, port_right=self.port_peer_right,
+                                            left_socket=self.socket_peer_left, right_socket=self.socket_peer_right)
 
     def client_register(self, handle: str):
 
@@ -100,7 +106,7 @@ class ClientNetwork:
         else:
             print("error case")
 
-    def client_query_handles(self):
+    def client_query_handles(self, print_user_list=False):
         if self.handle == '':
             print("cannot query user w/o registering. please register before sending the query command")
             return
@@ -261,6 +267,19 @@ class ClientNetwork:
                 print("received unknown message - exiting now")
         else:
             print("error case")
+
+    def client_tweet_out(self, tweet_message: str):
+        if self.handle == '':
+            print("cannot tweet w/o registering. please register before sending the `tweet` command")
+            return
+        print(f"-->Fetching the list of followers for {self.handle} by issuing the query_handles command.")
+        self.logic_network.tweet_message(message_string=tweet_message, follower_list=self.follower_list)
+
+    def client_wait_for_tweet(self, wait_timeout: int = 5):
+        if self.handle == '':
+            # no registration - cannot wait for tweet.
+            return
+        self.logic_network.process_and_forward_tweet(tweet_recv_timeout=wait_timeout)
 
     def close(self):
         self.socket_tracker.close()
