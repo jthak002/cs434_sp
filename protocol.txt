@@ -60,7 +60,7 @@ message format: (in json):
             {'request': 'end_tweet', 'error_code': 'failure' }
     ***CLIENT TO NEXT_CLIENT***
         { 'request': 'create_chain', 'chain_owner': (owner_tuple), tweet': 'string',
-        'user_list': [(user_1 tuple), (user_2 tuple), (user_3 tuple), ]
+        'user_list': [(user_1 tuple), (user_2 tuple), (user_3 tuple), ]}
     ***CLIENT TO PREVIOUS SENDER***
         SUCCESS:
             {'request': 'create_chain', 'error_code': 'success' }

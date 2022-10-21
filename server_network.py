@@ -67,6 +67,9 @@ class ServerNetwork:
                 # the message queue can drop message if the buffer size exceeds.
                 key_array = ['request', 'handle']
                 ServerNetwork.key_checker(key_array, message_dict)
+            elif user_request == "end_tweet":
+                key_array = ['request', 'handle']
+                ServerNetwork.key_checker(key_array, message_dict)
             elif user_request == "exit":
                 key_array = ['username']
                 ServerNetwork.key_checker(key_array, message_dict)
@@ -137,6 +140,13 @@ class ServerNetwork:
                 if self.tracker.check_and_verify(json_message.get("username", None), src_ip, src_port):
                     follower_tuple_list = self.tracker.tweet(json_message.get("handle", None))
                     return tweet_response(follower_tuple_list, True)
+                else:
+                    print("User source IP and source Port do not match username - IMPERSONATION")
+                    return tweet_response(None, False)
+            elif user_request == "end_tweet":
+                if self.tracker.check_and_verify(json_message.get("username", None), src_ip, src_port):
+                    follower_tuple_list = self.tracker.tweet(json_message.get("handle", None))
+                    return basic_response(user_request, True)
                 else:
                     print("User source IP and source Port do not match username - IMPERSONATION")
                     return tweet_response(None, False)
