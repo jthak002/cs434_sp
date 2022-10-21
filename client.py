@@ -6,7 +6,7 @@ register_rexp = re.compile('^register [a-zA-Z0-9]{1,15}$')
 query_rexp = re.compile('^query users$')
 follow_rexp = re.compile('^follow [a-zA-Z0-9]{1,15}\ [a-zA-Z0-9]{1,15}$')
 drop_rexp = re.compile('^drop [a-zA-Z0-9]{1,15}$')
-tweet_rexp = re.compile('^tweet [a-zA-Z0-9]{1,140}$')
+tweet_cmd = 'tweet'
 
 client: ClientNetwork
 
@@ -34,8 +34,9 @@ def interactive_function():
         handle = input_cmd.split()[1]
         client.client_drop_handle(handle)
         return
-    elif drop_rexp.match(input_cmd.strip()):
-        tweet_message = input_cmd.split()
+    elif input_cmd.strip() == 'tweet':
+        tweet_message = input("Enter the message you want to tweet! ")
+        client.client_tweet_out(tweet_message=tweet_message)
     elif input_cmd.strip() == 'back':
         return
     elif input_cmd.strip() == 'exit':

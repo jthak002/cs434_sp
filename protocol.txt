@@ -40,7 +40,7 @@ message format: (in json):
 
 5. tweet
     ***CLIENT TO SERVER***
-        {'request': 'send_tweet', 'handle': (client_handle)}
+        {'request': 'send_tweet', 'handle': client_handle}
         SUCCESS:
             {'request': 'send_tweet', 'error_code': 'success',
             'follower_list': [(user_1_IP, user_1_tp, user_1_lp, user_1_rp, user_1_handle),

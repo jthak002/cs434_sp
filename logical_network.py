@@ -16,15 +16,17 @@ class LogicalNetwork(object):
     port_tracker: int
     port_left: int
     port_right: int
+    handle: str
 
-    def __init__(self, left_socket, right_socket, hostname, port_tracker, port_left, port_right):
+    def __init__(self, left_socket, right_socket, hostname, port_tracker, port_left, port_right, handle):
         self.left_socket = left_socket
         self.right_socket = right_socket
         self.hostname = hostname
         self.port_tracker = port_tracker
         self.port_left = port_left
         self.port_right = port_right
-        self._tuple = (hostname, port_tracker, port_left, port_right)
+        self.handle = handle
+        self._tuple = (hostname, port_tracker, port_left, port_right, handle)
 
     # Support functions
     @staticmethod
@@ -51,23 +53,26 @@ class LogicalNetwork(object):
             print("encountered malformed message while checking verifying success response of message")
             return False
 
-    def _print_tweet(self, message: str, src_ip: str, src_port:int):
-        print(f"#########{src_ip}@{src_port} TWEETED#########")
-        print(message)
-        print("#############################################")
+    def print_tweet(self, message: str, src_handle: str):
+        print("\n#############################################")
+        print('\n' + src_handle + " tweeted: " + message + '\n')
+
+    def set_handle(self, handle):
+        self.handle = handle
+        self._tuple = (self.hostname, self.port_tracker, self.port_left, self.port_right, self.handle)
 
     # Logical Ring Functions
-    def find_left_neighbor(self, follower_list, my_list=False):
+    def find_left_neighbor(self, follower_list, owner_tuple, my_list=False):
         # for the owner of the follower list the left neighbor will be the 1st person in
         # the alphabetically sorted list
         if my_list:
-            return follower_list[0] if len(follower_list > 0) else None
+            return follower_list[0] if len(follower_list) > 0 else None
         # for everyone else navigating the list.
         for index in range(0, len(follower_list)):
-            if follower_list[index][0] is self.hostname:
+            if follower_list[index][4] == self.handle:
                 # for the last person on any follower list, the left neighbor will be the owner in that list.
                 if index is len(follower_list) - 1:
-                    return self._tuple
+                    return owner_tuple
                 # for everyone else it will be the next person in the list
                 else:
                     return follower_list[index + 1]
@@ -75,15 +80,15 @@ class LogicalNetwork(object):
         print("error_case: traversed whole follower_list but did not find the left_neighbor.")
         return None
 
-    def find_right_neighbor(self, follower_list: list[tuple[str, int, int]], my_list=False):
+    def find_right_neighbor(self, follower_list, owner_tuple, my_list=False):
         # for the owner of the follower list the right neighbor will be the last person in
         # the alphabetically sorted list
         if my_list:
             return follower_list[-1] if len(follower_list) > 0 else None
         prev_tuple = self._tuple
         for user_tuple in follower_list:
-            if user_tuple[0] is self.hostname:
-                return prev_tuple if prev_tuple is not None else follower_list[-1]
+            if user_tuple[4] == self.handle:
+                return prev_tuple if prev_tuple is not None else owner_tuple
             else:
                 prev_tuple = user_tuple
         # error case
@@ -97,18 +102,18 @@ class LogicalNetwork(object):
                         'tweet': message_string}
         print(f"Compiling the SEND_TWEET REQUEST=> {dict_message}")
         binary_request = json.dumps(dict_message).encode()
-        raw_message = None
-        next_peer = self.find_left_neighbor(follower_list=follower_list, my_list=True)
+        next_peer = self.find_left_neighbor(follower_list=follower_list, owner_tuple=self._tuple, my_list=True)
+        print(f"found the LEFT_PEER with the information {next_peer}")
         while True:
-            self.left_socket.sendto(binary_request, (next_peer[0], next_peer[2]))
+            self.left_socket.sendto(binary_request, (next_peer[0], next_peer[3]))
             self.left_socket.settimeout(30)
             try:
                 raw_message = self.left_socket.recvfrom(1024)
-                print(f'received raw_message = {raw_message}')
                 verify_status = self._verify_success_response(raw_message=raw_message, request_type='send_tweet')
                 verify_sender = self._verify_sender(message_sender_tuple=raw_message[1], addressee_tuple=(next_peer[0],
-                                                                                                          next_peer[2]))
+                                                                                                          next_peer[3]))
                 if verify_status and verify_sender:
+                    print(f"LEFT_PEER {next_peer[4]}@{next_peer[0]}:{next_peer[3]} CONFIRMED receipt of tweet.")
                     pass
                 else:
                     if verify_status:
@@ -119,7 +124,7 @@ class LogicalNetwork(object):
                     print(f"SEND_TWEET: DEBUG: {raw_message}")
                     continue
             except TimeoutError:
-                print(f"the previous message to the peer {next_peer[0]}:{next_peer[1]} did not get a response. "
+                print(f"the previous message to the peer {next_peer[0]}:{next_peer[3]} did not get a response. "
                       f"will try again")
                 continue
             break
@@ -132,14 +137,18 @@ class LogicalNetwork(object):
                 prop_confirm = self.right_socket.recvfrom(1024)
                 prop_confirm_message = json.loads(prop_confirm[0].decode())
                 if prop_confirm_message.get('request', None) == 'send_tweet':
-                    chain_owner_tuple = prop_confirm_message.get('chain_owner', (None, None, None, None))
+                    chain_owner_tuple = prop_confirm_message.get('chain_owner', (None, None, None, None, None))
                     if chain_owner_tuple[0] == self._tuple[0] and chain_owner_tuple[1] == self._tuple[1] and \
-                            chain_owner_tuple[2] == self._tuple[2] and chain_owner_tuple[3] == self._tuple[3]:
+                            chain_owner_tuple[2] == self._tuple[2] and chain_owner_tuple[3] == self._tuple[3] and \
+                            chain_owner_tuple[4] == self._tuple[4]:
                         print('TWEET PROPAGATED SUCCESSFULLY!')
-                        LogicalNetwork._send_success_message(for_request='send_tweet',
+                        self.print_tweet(message=message_string, src_handle=self.handle)
+                        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+                        self._send_success_message(for_request='send_tweet',
                                                              success=True, destination=prop_confirm[1][0],
-                                                             port=prop_confirm[1][0], additional_args=None,
+                                                             port=prop_confirm[1][1], additional_args=None,
                                                              snd_socket=self.right_socket)
+                        return True
                     else:
                         print("Received a TWEET message with another "
                               "`chain_owner`: {}.".format(prop_confirm_message.get('chain_owner', None)))
@@ -149,7 +158,11 @@ class LogicalNetwork(object):
                 else:
                     print(f"Received an unexpected message AFTER SEND_TWEET: {prop_confirm}")
             except TimeoutError:
+                print(f"Encountered TIMEOUT while propagating the tweet - Will try again."
+                      f" Retry({retries}/{PROPAGATION_RETRIES}) ")
+                retries += 1
                 pass
+        return False
 
     def process_and_forward_tweet(self, bypass_recv=False, raw_message: tuple[b'', tuple[str, int]] = None,
                                   tweet_recv_timeout: int = 5):
@@ -161,25 +174,35 @@ class LogicalNetwork(object):
             except TimeoutError:
                 return
         message = raw_message if bypass_recv else recv_tweet
+        sender = message[1]
+        self._send_success_message(for_request='send_tweet', success=True, destination=sender[0], port=sender[1],
+                                   snd_socket=self.right_socket)
+
         tweet_payload = json.loads(message[0].decode())
         next_peer = None
         tweet_text = None
-        mesg_sender = None
+        tweet_owner = None
         if tweet_payload.get('request', None) == 'send_tweet':
             try:
-                mesg_sender = tweet_payload.get('chain_owner')
-                tweet_text = tweet_payload.get('tweet_content', None)
-                next_peer = self.find_left_neighbor(tweet_payload.get('follower_list'))
+                print(f'tweet_payload --> {tweet_payload}') # remove after done.
+                tweet_owner = tweet_payload.get('chain_owner')
+                tweet_text = tweet_payload.get('tweet')
+                tweet_owner_follower_list = tweet_payload.get('follower_list')
+                print(f"received tweet-message from {tweet_owner[4]}@{tweet_owner[0]} --> {tweet_payload}")
+                next_peer = self.find_left_neighbor(follower_list=tweet_owner_follower_list,
+                                                    owner_tuple=tweet_owner, my_list=False)
             except KeyError:
                 print(f"One of the keys required in the message was missing. {sys.exc_info()}")
             while True:
-                self.left_socket.sendto(message, (next_peer[0], next_peer[2]))
+                # forward the raw message from the previous sender to the new one.
+                self.left_socket.sendto(message[0], (next_peer[0], next_peer[3]))
                 self.left_socket.settimeout(30)
                 try:
                     raw_message = self.left_socket.recvfrom(1024)
                     print(f'received raw_message = {raw_message}')
                     if self._verify_success_response(request_type='send_tweet', raw_message=raw_message):
-                        self._print_tweet(message=tweet_text, src_ip=mesg_sender[0], src_port=mesg_sender[1])
+                        self.print_tweet(message=tweet_text, src_handle=tweet_owner[4])
+                        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
                         break
                     else:
                         continue
