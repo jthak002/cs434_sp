@@ -25,7 +25,24 @@ def main():
             # tracker code that uses the json message to respond to user goes here
             # Parsing client request
             dict_res = server.server_route_mesg(dict_message, src_ip, src_port)
-            server.server_send(message=dict_res, source_ip=src_ip, source_port=src_port)
+            if dict_res["request"] == "send_tweet":
+                server.server_send(message=dict_res, source_ip=src_ip, source_port=src_port)
+                server.server_side_socket.settimeout(180)
+                try:
+                    raw_msg, src_ip, src_port = server.server_recv_mesg()
+
+                    if raw_msg.get('request', None) == "end_tweet":
+                        propagation_message = server.server_parse_mesg(message=raw_msg, source_ip=src_ip, source_port=src_port)
+                        propagation_res = server.server_route_mesg(propagation_message, src_ip, src_port)
+                        server.server_send(message=propagation_res, source_ip=src_ip, source_port=src_port)
+                        break
+
+                    continue
+                except TimeoutError:
+                    print("Propagation failed...")
+                    break
+            else:
+                server.server_send(message=dict_res, source_ip=src_ip, source_port=src_port)
 
     except KeyboardInterrupt:
         print("\nKeyboardInterrupt Exception: User Initiated Server Shutdown - Exiting Now.")

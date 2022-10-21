@@ -40,25 +40,30 @@ message format: (in json):
 
 5. tweet
     ***CLIENT TO SERVER***
+
         {'request': 'send_tweet', 'handle': client_handle}
+
+    ***SERVER TO CLIENT***
         SUCCESS:
-            {'request': 'send_tweet', 'error_code': 'success',
-            'follower_list': [(user_1_IP, user_1_tp, user_1_lp, user_1_rp, user_1_handle),
-            (user_2_IP, user_2_tp, user_2_lp, user_2_rp, user_2_handle),
-            (user_2_IP, user_2_tp, user_2_lp, user_2_rp, user_2_handle) ...
+            { 'request': 'send_tweet', 'error_code': 'success',
+            'follower_list': [
+                (user_1_IP, user_1_tp, user_1_lp, user_1_rp, user_1_handle),
+                (user_2_IP, user_2_tp, user_2_lp, user_2_rp, user_2_handle),
+                (user_2_IP, user_2_tp, user_2_lp, user_2_rp, user_2_handle) ...
             ] }
         FAILURE:
-            {'request': 'send_tweet', 'error_code': 'failure' }
-    ***WAIT FOR CLIENT TO CONFIRM THAT TWEET PROPOGATED***
+            { 'request': 'send_tweet', 'error_code': 'failure' }
+    ***SERVER WAIT FOR CLIENT TO CONFIRM THAT TWEET PROPAGATED***
         {'request': 'end_tweet', 'handle': (client_handle)}
+    ***SERVER NOTIFY CLIENT THAT TWEET HAS PROPAGATED***
         SUCCESS:
             {'request': 'end_tweet', 'error_code': 'success' }
         FAILURE:
             {'request': 'end_tweet', 'error_code': 'failure' }
-
     ***CLIENT TO NEXT_CLIENT***
-        {'request': 'send_tweet', 'chain_owner': (owner_tuple), tweet': 'string',
-        'user_list': [(user_1 tuple), (user_2 tuple), (user_3 tuple), ]
+        { 'request': 'create_chain', 'chain_owner': (owner_tuple), tweet': 'string',
+        'user_list': [(user_1 tuple), (user_2 tuple), (user_3 tuple), ]}
+    ***CLIENT TO PREVIOUS SENDER***
         SUCCESS:
             {'request': 'create_chain', 'error_code': 'success' }
         FAILURE:

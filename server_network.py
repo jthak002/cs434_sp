@@ -21,10 +21,9 @@ class ServerNetwork:
             self.server_side_socket.bind((self.host, self.port))
         except socket.error as e:
             print(str(e))
-        # Note to Wei: We do not use the socket.listen() class for UDP connections because the protocol is stateless and
+        # Do not use the socket.listen() class for UDP connections because the protocol is stateless and
         # packets are unorganized.
         # https://stackoverflow.com/questions/8194323/why-the-listen-function-call-is-not-needed-when-use-udp-socket
-        # self.server_side_socket.listen(5)
         print("Server has started... Socket is listening...")
 
     # Get message from client
@@ -48,26 +47,32 @@ class ServerNetwork:
 
             if user_request == "register":
                 key_array = ['handle', 'source_ip', 'tracker_port', 'peer_port_left', 'peer_port_right']
-                for key_check in key_array:
-                    if message_dict[key_check] is None:
-                        raise json.JSONDecodeError
+                ServerNetwork.key_checker(key_array, message_dict)
             elif user_request == "query_users":
                 pass
             elif user_request == "follow_user":
                 key_array = ['username_i', 'username_j']
-                for key_check in key_array:
-                    if message_dict[key_check] is None:
-                        raise json.JSONDecodeError
+                ServerNetwork.key_checker(key_array, message_dict)
             elif user_request == "drop_user":
                 key_array = ['username_i', 'username_j']
-                for key_check in key_array:
-                    if message_dict[key_check] is None:
-                        raise json.JSONDecodeError
+                ServerNetwork.key_checker(key_array, message_dict)
+            elif user_request == "send_tweet":
+                # While the user is creating the tweet, we just need to provide the follower list to
+                # the user and set a timeout to ensure that the end tweet is received before the server
+                # can process any request. Because there is a case where you need to ensure that no one
+                # can exit especially those that are part of the logical ring.
+                #
+                # While doing that, you also need to ensure that any incoming message during that timeout
+                # that are not part of the logical ring, is added to a message queue. Do also note that
+                # the message queue can drop message if the buffer size exceeds.
+                key_array = ['request', 'handle']
+                ServerNetwork.key_checker(key_array, message_dict)
+            elif user_request == "end_tweet":
+                key_array = ['request', 'handle']
+                ServerNetwork.key_checker(key_array, message_dict)
             elif user_request == "exit":
                 key_array = ['username']
-                for key_check in key_array:
-                    if message_dict[key_check] is None:
-                        raise json.JSONDecodeError
+                ServerNetwork.key_checker(key_array, message_dict)
             else:
                 raise json.JSONDecodeError
 
@@ -76,6 +81,12 @@ class ServerNetwork:
             return basic_response(user_request, False)
 
         return message_dict
+
+    @staticmethod
+    def key_checker(key_array, message_dict):
+        for key_check in key_array:
+            if message_dict[key_check] is None:
+                raise json.JSONDecodeError
 
     def server_route_mesg(self, json_message: dict, src_ip, src_port):
         user_request = json_message.get('request', None)
@@ -123,6 +134,22 @@ class ServerNetwork:
                 else:
                     print("User source IP and source Port do not match username - IMPERSONATION")
                     return basic_response(user_request, False)
+            elif user_request == "send_tweet":
+                # Follower List need to contain all the information about the all the followers of that
+                # particular user
+                if self.tracker.check_and_verify(json_message.get("username", None), src_ip, src_port):
+                    follower_tuple_list = self.tracker.tweet(json_message.get("handle", None))
+                    return tweet_response(follower_tuple_list, True)
+                else:
+                    print("User source IP and source Port do not match username - IMPERSONATION")
+                    return tweet_response(None, False)
+            elif user_request == "end_tweet":
+                if self.tracker.check_and_verify(json_message.get("username", None), src_ip, src_port):
+                    follower_tuple_list = self.tracker.tweet(json_message.get("handle", None))
+                    return basic_response(user_request, True)
+                else:
+                    print("User source IP and source Port do not match username - IMPERSONATION")
+                    return tweet_response(None, False)
             elif user_request == "exit":
                 if self.tracker.check_and_verify(json_message.get("username", None), src_ip, src_port):
                     self.tracker.exit(json_message.get("username", None))
@@ -157,3 +184,10 @@ def query_handle_response(is_success, user_count, list_users):
         return {'request': 'query_users', 'error_code': 'success', 'num_users': user_count, 'user_list': list_users}
 
     return {'request': 'query_users', 'error_code': 'failure'}
+
+
+def tweet_response(follower_tuple_list, is_success):
+    if is_success:
+        return {'request': 'send_tweet', 'error_code': 'success', 'follower_list': follower_tuple_list}
+
+    return {'request': 'send_tweet', 'error_code': 'failure'}
