@@ -64,7 +64,8 @@ class ClientNetwork:
         print("Setup the LogicalNetwork Object for this client -->")
         self.logic_network = LogicalNetwork(hostname=self.host, port_tracker=self.port_tracker,
                                             port_left=self.port_peer_left, port_right=self.port_peer_right,
-                                            left_socket=self.socket_peer_left, right_socket=self.socket_peer_right)
+                                            left_socket=self.socket_peer_left, right_socket=self.socket_peer_right,
+                                            handle=self.handle)
 
     def client_register(self, handle: str):
 
@@ -94,6 +95,7 @@ class ClientNetwork:
                         json.loads(json_message).get('error_code') == 'success':
                     self.handle = handle
                     print(f"The handle {handle}@{self.host}:{self.port_tracker} has registered successfully!")
+                    self.logic_network.set_handle(self.handle)
                 elif json.loads(json_message).get('request') == 'register' and \
                         json.loads(json_message).get('error_code') == 'failure':
                     print(f"The handle {handle}@{self.host}:{self.port_tracker} received failure message from server - "
@@ -273,8 +275,17 @@ class ClientNetwork:
             print("cannot tweet w/o registering. please register before sending the `tweet` command")
             return
         print(f"-->Fetching the list of followers for {self.handle} by issuing the query_handles command.")
-        self.client_query_handles()
-        self.logic_network.tweet_message(message_string=tweet_message, follower_list=self.follower_list)
+        # self.client_query_handles() #TODO: Process the actual get_followers request.
+        follower_list_temp = [('127.0.0.1', 5011, 5012, 5013, 'userb'),
+                              ('127.0.0.1', 5021, 5022, 5023, 'userc'), ('127.0.0.1', 5031, 5032, 5033, 'userd')]
+        follower_list = follower_list_temp
+        if len(follower_list):
+            # if follower_list > 0, only then create logical ring
+            self.logic_network.tweet_message(message_string=tweet_message, follower_list=follower_list_temp)
+        else:
+            # if follower_list=0, just display the tweet and tell the server that the tweet broadcast has completed.
+            self.logic_network.print_tweet(message=tweet_message, src_handle=self.handle)
+        # todo: confirm to the server that broadcast is completed.
 
     def client_wait_for_tweet(self, wait_timeout: int = 5):
         if self.handle == '':
