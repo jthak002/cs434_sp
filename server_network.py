@@ -47,22 +47,16 @@ class ServerNetwork:
 
             if user_request == "register":
                 key_array = ['handle', 'source_ip', 'tracker_port', 'peer_port_left', 'peer_port_right']
-                for key_check in key_array:
-                    if message_dict[key_check] is None:
-                        raise json.JSONDecodeError
+                ServerNetwork.key_checker(key_array, message_dict)
             elif user_request == "query_users":
                 pass
             elif user_request == "follow_user":
                 key_array = ['username_i', 'username_j']
-                for key_check in key_array:
-                    if message_dict[key_check] is None:
-                        raise json.JSONDecodeError
+                ServerNetwork.key_checker(key_array, message_dict)
             elif user_request == "drop_user":
                 key_array = ['username_i', 'username_j']
-                for key_check in key_array:
-                    if message_dict[key_check] is None:
-                        raise json.JSONDecodeError
-            elif user_request == "create_chain":
+                ServerNetwork.key_checker(key_array, message_dict)
+            elif user_request == "send_tweet":
                 # While the user is creating the tweet, we just need to provide the follower list to
                 # the user and set a timeout to ensure that the end tweet is received before the server
                 # can process any request. Because there is a case where you need to ensure that no one
@@ -71,12 +65,11 @@ class ServerNetwork:
                 # While doing that, you also need to ensure that any incoming message during that timeout
                 # that are not part of the logical ring, is added to a message queue. Do also note that
                 # the message queue can drop message if the buffer size exceeds.
-                pass
+                key_array = ['request', 'handle']
+                ServerNetwork.key_checker(key_array, message_dict)
             elif user_request == "exit":
                 key_array = ['username']
-                for key_check in key_array:
-                    if message_dict[key_check] is None:
-                        raise json.JSONDecodeError
+                ServerNetwork.key_checker(key_array, message_dict)
             else:
                 raise json.JSONDecodeError
 
@@ -85,6 +78,12 @@ class ServerNetwork:
             return basic_response(user_request, False)
 
         return message_dict
+
+    @staticmethod
+    def key_checker(key_array, message_dict):
+        for key_check in key_array:
+            if message_dict[key_check] is None:
+                raise json.JSONDecodeError
 
     def server_route_mesg(self, json_message: dict, src_ip, src_port):
         user_request = json_message.get('request', None)
@@ -132,6 +131,14 @@ class ServerNetwork:
                 else:
                     print("User source IP and source Port do not match username - IMPERSONATION")
                     return basic_response(user_request, False)
+            elif user_request == "send_tweet":
+                # Follower List need to contain all the information about the all the followers of that
+                # particular user
+                follower_list = self.tracker.handles[json_message.get("client_handle", None)]["follower"]
+                for follower in follower_list:
+                    self.tracker.handles[""]
+                # follower_tuple =
+                pass
             elif user_request == "exit":
                 if self.tracker.check_and_verify(json_message.get("username", None), src_ip, src_port):
                     self.tracker.exit(json_message.get("username", None))
