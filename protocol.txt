@@ -43,12 +43,17 @@ message format: (in json):
         { 'request': 'send_tweet', 'handle': (client_handle)}
     ***SERVER TO CLIENT***
         SUCCESS:
-            { 'request': 'send_tweet', 'error_code': 'success', 'follower_list': [(user1_tuple), (user2_tuple)] }
+            { 'request': 'send_tweet', 'error_code': 'success',
+            'follower_list': [
+                (user_1_IP, user_1_tp, user_1_lp, user_1_rp, user_1_handle),
+                (user_2_IP, user_2_tp, user_2_lp, user_2_rp, user_2_handle),
+                (user_2_IP, user_2_tp, user_2_lp, user_2_rp, user_2_handle) ...
+            ] }
         FAILURE:
             { 'request': 'send_tweet', 'error_code': 'failure' }
     ***SERVER WAIT FOR CLIENT TO CONFIRM THAT TWEET PROPAGATED***
         {'request': 'end_tweet', 'handle': (client_handle)}
-    ***CLIENT NOTIFY SERVER THAT TWEET HAS ***
+    ***SERVER NOTIFY CLIENT THAT TWEET HAS PROPAGATED***
         SUCCESS:
             {'request': 'end_tweet', 'error_code': 'success' }
         FAILURE:

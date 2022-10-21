@@ -4,11 +4,17 @@ from server_network import ServerNetwork
 from tracker import Tracker
 
 
+message_queue = []
+
+
 def initialize_socket():
     server = ServerNetwork()
     server.server_start()
     return server
 
+
+def context_resume():
+    pass
 
 def main():
     server = ServerNetwork()
@@ -25,7 +31,25 @@ def main():
             # tracker code that uses the json message to respond to user goes here
             # Parsing client request
             dict_res = server.server_route_mesg(dict_message, src_ip, src_port)
-            server.server_send(message=dict_res, source_ip=src_ip, source_port=src_port)
+            if dict_res["request"] == "send_tweet":
+                server.server_send(message=dict_res, source_ip=src_ip, source_port=src_port)
+                server.server_side_socket.settimeout(180)
+                try:
+                    propagation_message = server.server_recv_mesg()
+                    if propagation_message['request'] == "end_tweet":
+                        if propagation_message['handle'] == dict_message["handle"]:
+                            print(f"Received Propagation Termination: {propagation_message}")
+                            break
+                    else:
+                        message_queue.append(propagation_message)
+                        continue
+                except TimeoutError:
+                    print("Propagation failed...")
+                    break
+
+                context_resume()
+            else:
+                server.server_send(message=dict_res, source_ip=src_ip, source_port=src_port)
 
     except KeyboardInterrupt:
         print("\nKeyboardInterrupt Exception: User Initiated Server Shutdown - Exiting Now.")

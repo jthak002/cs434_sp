@@ -45,11 +45,21 @@ class Tracker:
 
         print("@" + curr_user_handle + "has stop following @" + follow_user_handle)
 
-    def tweet(self, curr_user_handle, tweet_str):
-        pass
+    def tweet(self, curr_user_handle):
+        follower_list = self.handles[curr_user_handle]["follower"]
 
-    def end_tweet(self):
-        pass
+        follower_list_tuple = []
+
+        for follower in follower_list:
+            user_ip = self.handles[follower]["source_ip"]
+            user_tp = self.handles[follower]["port"][0]
+            user_lp = self.handles[follower]["port"][1]
+            user_rp = self.handles[follower]["port"][2]
+            user_handle = follower
+            follower_tuple = (user_ip, user_tp, user_lp, user_rp, user_handle)
+            follower_list_tuple.append(follower_tuple)
+
+        return follower_list_tuple
 
     def exit(self, curr_user_handle):
         try:

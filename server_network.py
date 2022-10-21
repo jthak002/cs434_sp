@@ -134,11 +134,12 @@ class ServerNetwork:
             elif user_request == "send_tweet":
                 # Follower List need to contain all the information about the all the followers of that
                 # particular user
-                follower_list = self.tracker.handles[json_message.get("client_handle", None)]["follower"]
-                for follower in follower_list:
-                    self.tracker.handles[""]
-                # follower_tuple =
-                pass
+                if self.tracker.check_and_verify(json_message.get("username", None), src_ip, src_port):
+                    follower_tuple_list = self.tracker.tweet(json_message.get("handle", None))
+                    return tweet_response(follower_tuple_list, True)
+                else:
+                    print("User source IP and source Port do not match username - IMPERSONATION")
+                    return tweet_response(None, False)
             elif user_request == "exit":
                 if self.tracker.check_and_verify(json_message.get("username", None), src_ip, src_port):
                     self.tracker.exit(json_message.get("username", None))
@@ -173,3 +174,10 @@ def query_handle_response(is_success, user_count, list_users):
         return {'request': 'query_users', 'error_code': 'success', 'num_users': user_count, 'user_list': list_users}
 
     return {'request': 'query_users', 'error_code': 'failure'}
+
+
+def tweet_response(follower_tuple_list, is_success):
+    if is_success:
+        return {'request': 'send_tweet', 'error_code': 'success', 'follower_list': follower_tuple_list}
+
+    return {'request': 'send_tweet', 'error_code': 'failure'}
