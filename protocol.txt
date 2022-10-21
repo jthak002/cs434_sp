@@ -42,7 +42,11 @@ message format: (in json):
     ***CLIENT TO SERVER***
         {'request': 'send_tweet', 'handle': (client_handle)}
         SUCCESS:
-            {'request': 'send_tweet', 'error_code': 'success' }
+            {'request': 'send_tweet', 'error_code': 'success',
+            'follower_list': [(user_1_IP, user_1_tp, user_1_lp, user_1_rp, user_1_handle),
+            (user_2_IP, user_2_tp, user_2_lp, user_2_rp, user_2_handle),
+            (user_2_IP, user_2_tp, user_2_lp, user_2_rp, user_2_handle) ...
+            ] }
         FAILURE:
             {'request': 'send_tweet', 'error_code': 'failure' }
     ***WAIT FOR CLIENT TO CONFIRM THAT TWEET PROPOGATED***
