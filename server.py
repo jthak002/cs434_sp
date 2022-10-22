@@ -35,7 +35,7 @@ def main():
                         propagation_message = server.server_parse_mesg(message=raw_msg, source_ip=src_ip, source_port=src_port)
                         propagation_res = server.server_route_mesg(propagation_message, src_ip, src_port)
                         server.server_send(message=propagation_res, source_ip=src_ip, source_port=src_port)
-                        break
+                        continue
 
                     continue
                 except TimeoutError:
