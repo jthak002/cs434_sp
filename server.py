@@ -1,5 +1,5 @@
 import sys
-
+import json
 from server_network import ServerNetwork
 from tracker import Tracker
 
@@ -31,7 +31,7 @@ def main():
                 try:
                     raw_msg, src_ip, src_port = server.server_recv_mesg()
 
-                    if raw_msg.get('request', None) == "end_tweet":
+                    if json.loads(raw_msg.decode()).get('request', None) == "end_tweet":
                         propagation_message = server.server_parse_mesg(message=raw_msg, source_ip=src_ip, source_port=src_port)
                         propagation_res = server.server_route_mesg(propagation_message, src_ip, src_port)
                         server.server_send(message=propagation_res, source_ip=src_ip, source_port=src_port)
