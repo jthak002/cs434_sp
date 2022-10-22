@@ -270,7 +270,17 @@ class ClientNetwork:
         else:
             print("error case")
 
-    def client_tweet_out(self, tweet_message: str):
+    def client_tweet_out(self, tweet_message:str):
+        if self.handle == '':
+            print("cannot tweet w/o registering. please register before sending the `tweet` command")
+            return
+        print(f"-->Tweeting out {tweet_message} from {self.handle}@{self.handle} ")
+        dict_message = {'request': 'send_tweet', 'username': self.handle}
+        print(f"Compiling the DROP HANDLE REQUEST=> {dict_message}")
+        binary_request_message = json.dumps(dict_message).encode()
+
+
+    def client_tweet_out_auxillary(self, tweet_message: str):
         if self.handle == '':
             print("cannot tweet w/o registering. please register before sending the `tweet` command")
             return
