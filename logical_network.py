@@ -123,7 +123,7 @@ class LogicalNetwork(object):
                         print("SEND_TWEET received a message from another message than what was expected.")
                     print(f"SEND_TWEET: DEBUG: {raw_message}")
                     continue
-            except TimeoutError:
+            except (TimeoutError, socket.timeout):
                 print(f"the previous message to the peer {next_peer[0]}:{next_peer[3]} did not get a response. "
                       f"will try again")
                 continue
@@ -157,7 +157,7 @@ class LogicalNetwork(object):
                         continue
                 else:
                     print(f"Received an unexpected message AFTER SEND_TWEET: {prop_confirm}")
-            except TimeoutError:
+            except (TimeoutError, socket.timeout):
                 print(f"Encountered TIMEOUT while propagating the tweet - Will try again."
                       f" Retry({retries}/{PROPAGATION_RETRIES}) ")
                 retries += 1
@@ -171,7 +171,7 @@ class LogicalNetwork(object):
             try:
                 self.right_socket.settimeout(tweet_recv_timeout)
                 recv_tweet = self.right_socket.recvfrom(1024)
-            except TimeoutError:
+            except (TimeoutError, socket.timeout):
                 return
         message = raw_message if bypass_recv else recv_tweet
         sender = message[1]
@@ -206,7 +206,7 @@ class LogicalNetwork(object):
                         break
                     else:
                         continue
-                except TimeoutError:
+                except (TimeoutError, socket.timeout):
                     print(f"the previous message to the peer {next_peer[0]}:{next_peer[1]} did not get a response. "
                           f"will try again")
                     continue

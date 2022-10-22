@@ -38,7 +38,7 @@ def main():
                         continue
 
                     continue
-                except TimeoutError:
+                except (TimeoutError, socket.timeout):
                     print("Propagation failed...")
                     break
             else:

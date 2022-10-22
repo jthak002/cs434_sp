@@ -48,7 +48,7 @@ class ClientNetwork:
             try:
                 raw_message = self.socket_tracker.recvfrom(1024)
                 print(f"Received RAW_MESSAGE={raw_message}")
-            except TimeoutError:
+            except (TimeoutError, socket.timeout):
                 print("the previous message to the tracker did not get a response. will try again")
                 continue
             break
@@ -129,7 +129,7 @@ class ClientNetwork:
             try:
                 raw_message = self.socket_tracker.recvfrom(1024)
                 print(f"Received RAW_MESSAGE={raw_message}")
-            except TimeoutError:
+            except (TimeoutError, socket.timeout):
                 print("the previous message to the tracker did not get a response. will try again")
                 continue
             break
@@ -171,7 +171,7 @@ class ClientNetwork:
             try:
                 raw_message = self.socket_tracker.recvfrom(1024)
                 print(f"Received RAW_MESSAGE={raw_message}")
-            except TimeoutError:
+            except (TimeoutError, socket.timeout):
                 print("the previous message to the tracker did not get a response. will try again")
                 continue
             break
@@ -216,7 +216,7 @@ class ClientNetwork:
             try:
                 raw_message = self.socket_tracker.recvfrom(1024)
                 print(f"Received RAW_MESSAGE={raw_message}")
-            except TimeoutError:
+            except (TimeoutError, socket.timeout):
                 print("the previous message to the tracker did not get a response. will try again")
                 continue
             break
@@ -255,7 +255,7 @@ class ClientNetwork:
             try:
                 raw_message = self.socket_tracker.recvfrom(1024)
                 print(f"Received RAW_MESSAGE={raw_message}")
-            except TimeoutError:
+            except (TimeoutError, socket.timeout):
                 print("the previous message to the tracker did not get a response. will try again")
                 continue
             break
@@ -294,7 +294,7 @@ class ClientNetwork:
             try:
                 raw_message = self.socket_tracker.recvfrom(1024)
                 print(f"Received RAW_MESSAGE={raw_message}")
-            except TimeoutError:
+            except (TimeoutError, socket.timeout):
                 print("the previous message to the tracker did not get a response. will try again")
                 continue
             break
