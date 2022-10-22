@@ -54,7 +54,7 @@ message format: (in json):
         FAILURE:
             { 'request': 'send_tweet', 'error_code': 'failure' }
     ***SERVER WAIT FOR CLIENT TO CONFIRM THAT TWEET PROPAGATED***
-        {'request': 'end_tweet', 'handle': (client_handle)}
+        {'request': 'end_tweet', 'handle': client_handle}
     ***SERVER NOTIFY CLIENT THAT TWEET HAS PROPAGATED***
         SUCCESS:
             {'request': 'end_tweet', 'error_code': 'success' }

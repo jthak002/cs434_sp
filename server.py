@@ -1,6 +1,7 @@
 import sys
-
+import json
 from server_network import ServerNetwork
+import socket
 from tracker import Tracker
 
 
@@ -31,14 +32,14 @@ def main():
                 try:
                     curr_message, src_ip, src_port = server.server_recv_mesg()
 
-                    if curr_message.get('request', None) == "end_tweet" and curr_message.get('handle', None) == raw_msg.get('handle', None):
+                    if json.loads(curr_message.decode()).get('request', None) == "end_tweet" and json.loads(curr_message.decode()).get('handle', None) == json.loads(raw_msg.decode()).get('handle', None):
                         propagation_message = server.server_parse_mesg(message=raw_msg, source_ip=src_ip, source_port=src_port)
                         propagation_res = server.server_route_mesg(propagation_message, src_ip, src_port)
                         server.server_send(message=propagation_res, source_ip=src_ip, source_port=src_port)
-                        break
+                        continue
 
                     continue
-                except TimeoutError:
+                except (TimeoutError, socket.timeout):
                     print("Propagation failed...")
                     break
             else:

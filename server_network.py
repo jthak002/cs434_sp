@@ -31,6 +31,7 @@ class ServerNetwork:
         print()
         print("==========================================")
         print("Waiting for message")
+        print(f"socket_timeout --> {self.server_side_socket.gettimeout()}")
         raw_msg = self.server_side_socket.recvfrom(1024)
         print(raw_msg)
         # TEST - this is a statement to test the buffering on the udp socket.
@@ -137,15 +138,17 @@ class ServerNetwork:
             elif user_request == "send_tweet":
                 # Follower List need to contain all the information about the all the followers of that
                 # particular user
-                if self.tracker.check_and_verify(json_message.get("username", None), src_ip, src_port):
+                if self.tracker.check_and_verify(json_message.get("handle", None), src_ip, src_port):
                     follower_tuple_list = self.tracker.tweet(json_message.get("handle", None))
                     return tweet_response(follower_tuple_list, True)
                 else:
                     print("User source IP and source Port do not match username - IMPERSONATION")
                     return tweet_response(None, False)
             elif user_request == "end_tweet":
-                if self.tracker.check_and_verify(json_message.get("username", None), src_ip, src_port):
-                    follower_tuple_list = self.tracker.tweet(json_message.get("handle", None))
+                if self.tracker.check_and_verify(json_message.get("handle", None), src_ip, src_port):
+                    print("setting socket.timeout back to None")
+                    if self.server_side_socket.gettimeout() is not None:
+                        self.server_side_socket.settimeout(None)
                     return basic_response(user_request, True)
                 else:
                     print("User source IP and source Port do not match username - IMPERSONATION")
