@@ -137,7 +137,7 @@ class ServerNetwork:
             elif user_request == "send_tweet":
                 # Follower List need to contain all the information about the all the followers of that
                 # particular user
-                if self.tracker.check_and_verify(json_message.get("username", None), src_ip, src_port):
+                if self.tracker.check_and_verify(json_message.get("handle", None), src_ip, src_port):
                     follower_tuple_list = self.tracker.tweet(json_message.get("handle", None))
                     return tweet_response(follower_tuple_list, True)
                 else:
