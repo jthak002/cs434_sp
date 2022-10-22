@@ -55,6 +55,7 @@ class ClientNetwork:
         return raw_message
 
     def _process_message_confirm(self, raw_message: tuple[b'', ()], action: str, return_items: list[str] = None):
+        status_code = False
         if type(raw_message) is tuple and len(raw_message) == 2:
             json_message = raw_message[0].decode()
             src_ip = raw_message[1][0]
@@ -64,7 +65,8 @@ class ClientNetwork:
                 print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
                 if message_json.get('request') == action and \
                         message_json.get('error_code') == 'success':
-                    print(f'@{self.handle}\'s request for action {action} was processed by the tracker successfully')
+                    print(f'@{self.host}\'s request for action {action} was processed by the tracker successfully')
+                    status_code = True
                     if return_items:
                         return_payload = {}
                         for item in return_items:
@@ -72,7 +74,7 @@ class ClientNetwork:
                                 return_payload[item] = message_json.get(item)
                             except KeyError:
                                 print(f'could not find {item} in the raw_message response for \'{action}\'')
-                        return return_payload
+                        return return_payload, status_code
                 elif message_json.get('request') == action and \
                         message_json.get('error_code') == 'failure':
                     print(f"Tracker responded with a failure message when performing {action} for {self.handle}")
@@ -83,6 +85,7 @@ class ClientNetwork:
                 print("received unknown message - exiting now")
         else:
             print("error case")
+        return status_code
 
     def setup(self):
         print(f"trying to bind TRACKER_SOCKET to  the socket@{self.host}:{self.port_tracker}")
@@ -122,39 +125,12 @@ class ClientNetwork:
                         'peer_port_right': self.port_peer_right}
         print(f"Compiling the REGISTER REQUEST=> {dict_message}")
         binary_request_message = json.dumps(dict_message).encode()
-        raw_message = None
-        while True:
-            self.socket_tracker.sendto(binary_request_message, (TRACKER_URL, TRACKER_PORT))
-            self.socket_tracker.settimeout(30)
-            try:
-                raw_message = self.socket_tracker.recvfrom(1024)
-                print(f"Received RAW_MESSAGE={raw_message}")
-            except (TimeoutError, socket.timeout):
-                print("the previous message to the tracker did not get a response. will try again")
-                continue
-            break
-        if type(raw_message) is tuple and len(raw_message) == 2:
-            json_message = raw_message[0].decode()
-            src_ip = raw_message[1][0]
-            src_port = raw_message[1][1]
-            if src_ip == TRACKER_URL and src_port == TRACKER_PORT:
-                print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-                if json.loads(json_message).get('request') == 'register' and \
-                        json.loads(json_message).get('error_code') == 'success':
-                    self.handle = handle
-                    print(f"The handle {handle}@{self.host}:{self.port_tracker} has registered successfully!")
-                    self.logic_network.set_handle(self.handle)
-                elif json.loads(json_message).get('request') == 'register' and \
-                        json.loads(json_message).get('error_code') == 'failure':
-                    print(f"The handle {handle}@{self.host}:{self.port_tracker} received failure message from server - "
-                          f"It is probably already registered.")
-                else:
-                    print("received malformed message - printing to console")
-                    print(raw_message)
-            else:
-                print("received unknown message - exiting now")
-        else:
-            print("error case")
+        raw_message = self._send_message_tracker(message_action='register', binary_request=binary_request_message)
+        status_code = self._process_message_confirm(action='register', raw_message=raw_message, return_items=None)
+        if status_code:
+            self.handle = handle
+            print(f"The handle {handle}@{self.host}:{self.port_tracker} has registered successfully!")
+            self.logic_network.set_handle(self.handle)
 
     def client_query_handles(self):
         if self.handle == '':
@@ -328,7 +304,7 @@ class ClientNetwork:
         print(f"Compiling the {action} Request=> {dict_message}")
         binary_request_message = json.dumps(dict_message).encode()
         raw_message = self._send_message_tracker(message_action=action, binary_request=binary_request_message)
-        return_items = self._process_message_confirm(action=action, raw_message=raw_message,
+        return_items, _ = self._process_message_confirm(action=action, raw_message=raw_message,
                                                      return_items=['follower_list'])
         # creating the logical ring and propagate tweet
         self.client_tweet_out_auxillary(tweet_message=tweet_message, follower_list=return_items['follower_list'])
