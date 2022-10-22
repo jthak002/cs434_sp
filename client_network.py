@@ -289,7 +289,7 @@ class ClientNetwork:
         raw_message = None
         while True:
             self.socket_tracker.sendto(binary_request_message, (TRACKER_URL, TRACKER_PORT))
-            print(f"sentEXIT_REQUEST to {TRACKER_URL}:{TRACKER_PORT}")
+            print(f"sent EXIT_REQUEST to {TRACKER_URL}:{TRACKER_PORT}")
             self.socket_tracker.settimeout(30)
             try:
                 raw_message = self.socket_tracker.recvfrom(1024)
@@ -304,10 +304,10 @@ class ClientNetwork:
             src_port = raw_message[1][1]
             if src_ip == TRACKER_URL and src_port == TRACKER_PORT:
                 print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-                if json.loads(json_message).get('request') == 'exit_user' and \
+                if json.loads(json_message).get('request') == 'exit' and \
                         json.loads(json_message).get('error_code') == 'success':
                     print(f'@{self.handle} request to exit @{self.handle}was processed by the tracker successfully')
-                elif json.loads(json_message).get('request') == 'drop_users' and \
+                elif json.loads(json_message).get('request') == 'exit' and \
                         json.loads(json_message).get('error_code') == 'failure':
                     print(f"Tracker responded with a failure message when exiting @{self.handle}")
                 else:
@@ -328,10 +328,11 @@ class ClientNetwork:
         print(f"Compiling the {action} Request=> {dict_message}")
         binary_request_message = json.dumps(dict_message).encode()
         raw_message = self._send_message_tracker(message_action=action, binary_request=binary_request_message)
-        self._process_message_confirm(action=action, raw_message=raw_message, return_items=['follower_list'])
-        # todo: include logic for client_tweet_out_auxillary
-        time.sleep(5)
-        self.logic_network.print_tweet(message=tweet_message, src_handle=self.handle)
+        return_items = self._process_message_confirm(action=action, raw_message=raw_message,
+                                                     return_items=['follower_list'])
+        # creating the logical ring and propagate tweet
+        self.client_tweet_out_auxillary(tweet_message=tweet_message, follower_list=return_items['follower_list'])
+        # tweet propagation completed/timed-out --> proceed now.
         action = 'end_tweet'
         print(f"-->right_neighbor confirmed, propagation of tweet.")
         dict_message = {'request': action, 'handle': self.handle}
@@ -340,22 +341,15 @@ class ClientNetwork:
         raw_message = self._send_message_tracker(message_action=action, binary_request=binary_request_message)
         self._process_message_confirm(action=action, raw_message=raw_message)
 
-    def client_tweet_out_auxillary(self, tweet_message: str):
-        if self.handle == '':
-            print("cannot tweet w/o registering. please register before sending the `tweet` command")
-            return
-        print(f"-->Fetching the list of followers for {self.handle} by issuing the query_handles command.")
-        # self.client_query_handles() #TODO: Process the actual get_followers request.
-        follower_list_temp = [('127.0.0.1', 5011, 5012, 5013, 'userb'),
-                              ('127.0.0.1', 5021, 5022, 5023, 'userc'), ('127.0.0.1', 5031, 5032, 5033, 'userd')]
-        follower_list = follower_list_temp
+    def client_tweet_out_auxillary(self, tweet_message: str, follower_list: []):
         if len(follower_list):
             # if follower_list > 0, only then create logical ring
-            self.logic_network.tweet_message(message_string=tweet_message, follower_list=follower_list_temp)
+            print("-->creating a logical ring of {} followers and propagating tweet")
+            self.logic_network.tweet_message(message_string=tweet_message, follower_list=follower_list)
         else:
             # if follower_list=0, just display the tweet and tell the server that the tweet broadcast has completed.
+            print("-->user does not have followers - tweet will only be visible to self.")
             self.logic_network.print_tweet(message=tweet_message, src_handle=self.handle)
-        # todo: confirm to the server that broadcast is completed.
 
     def client_wait_for_tweet(self, wait_timeout: int = 5):
         if self.handle == '':
