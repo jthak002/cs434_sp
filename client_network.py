@@ -1,6 +1,8 @@
 import os
 import socket
 import json
+import time
+
 from logical_network import LogicalNetwork
 
 TRACKER_URL = os.getenv('TRACKER_URL','127.0.0.1')
@@ -35,6 +37,52 @@ class ClientNetwork:
         self.handle = ''
         print(f"Client has been initialized with the IP={self.host}, and ports=[{self.port_tracker},"
               f"{self.port_peer_left},{self.port_peer_right} ]")
+
+    # helper functions
+    def _send_message_tracker(self, message_action: str, binary_request: b''):
+        raw_message = None
+        while True:
+            self.socket_tracker.sendto(binary_request, (TRACKER_URL, TRACKER_PORT))
+            print(f"sent {message_action} to {TRACKER_URL}:{TRACKER_PORT}")
+            self.socket_tracker.settimeout(30)
+            try:
+                raw_message = self.socket_tracker.recvfrom(1024)
+                print(f"Received RAW_MESSAGE={raw_message}")
+            except TimeoutError:
+                print("the previous message to the tracker did not get a response. will try again")
+                continue
+            break
+        return raw_message
+
+    def _process_message_confirm(self, raw_message: tuple[b'', ()], action: str, return_items: list[str] = None):
+        if type(raw_message) is tuple and len(raw_message) == 2:
+            json_message = raw_message[0].decode()
+            src_ip = raw_message[1][0]
+            src_port = raw_message[1][1]
+            message_json = json.loads(json_message)
+            if src_ip == TRACKER_URL and src_port == TRACKER_PORT:
+                print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+                if message_json.get('request') == action and \
+                        message_json.get('error_code') == 'success':
+                    print(f'@{self.handle}\'s request for action {action} was processed by the tracker successfully')
+                    if return_items:
+                        return_payload = {}
+                        for item in return_items:
+                            try:
+                                return_payload[item] = message_json.get(item)
+                            except KeyError:
+                                print(f'could not find {item} in the raw_message response for \'{action}\'')
+                        return return_payload
+                elif message_json.get('request') == action and \
+                        message_json.get('error_code') == 'failure':
+                    print(f"Tracker responded with a failure message when performing {action} for {self.handle}")
+                else:
+                    print("received malformed message - printing to console")
+                    print(raw_message)
+            else:
+                print("received unknown message - exiting now")
+        else:
+            print("error case")
 
     def setup(self):
         print(f"trying to bind TRACKER_SOCKET to  the socket@{self.host}:{self.port_tracker}")
@@ -108,7 +156,7 @@ class ClientNetwork:
         else:
             print("error case")
 
-    def client_query_handles(self, print_user_list=False):
+    def client_query_handles(self):
         if self.handle == '':
             print("cannot query user w/o registering. please register before sending the query command")
             return
@@ -274,11 +322,23 @@ class ClientNetwork:
         if self.handle == '':
             print("cannot tweet w/o registering. please register before sending the `tweet` command")
             return
+        action = 'send_tweet'
         print(f"-->Tweeting out {tweet_message} from {self.handle}@{self.handle} ")
-        dict_message = {'request': 'send_tweet', 'username': self.handle}
-        print(f"Compiling the DROP HANDLE REQUEST=> {dict_message}")
+        dict_message = {'request': action, 'handle': self.handle}
+        print(f"Compiling the {action} Request=> {dict_message}")
         binary_request_message = json.dumps(dict_message).encode()
-
+        raw_message = self._send_message_tracker(message_action=action, binary_request=binary_request_message)
+        self._process_message_confirm(action=action, raw_message=raw_message, return_items=['follower_list'])
+        # todo: include logic for client_tweet_out_auxillary
+        time.sleep(5)
+        self.logic_network.print_tweet(message=tweet_message, src_handle=self.handle)
+        action = 'end_tweet'
+        print(f"-->right_neighbor confirmed, propagation of tweet.")
+        dict_message = {'request': action, 'handle': self.handle}
+        print(f"Compiling the {action} Request=> {dict_message}")
+        binary_request_message = json.dumps(dict_message).encode()
+        raw_message = self._send_message_tracker(message_action=action, binary_request=binary_request_message)
+        self._process_message_confirm(action=action, raw_message=raw_message)
 
     def client_tweet_out_auxillary(self, tweet_message: str):
         if self.handle == '':
