@@ -29,9 +29,9 @@ def main():
                 server.server_send(message=dict_res, source_ip=src_ip, source_port=src_port)
                 server.server_side_socket.settimeout(180)
                 try:
-                    raw_msg, src_ip, src_port = server.server_recv_mesg()
+                    curr_message, src_ip, src_port = server.server_recv_mesg()
 
-                    if raw_msg.get('request', None) == "end_tweet":
+                    if curr_message.get('request', None) == "end_tweet" and curr_message.get('handle', None) == raw_msg.get('handle', None):
                         propagation_message = server.server_parse_mesg(message=raw_msg, source_ip=src_ip, source_port=src_port)
                         propagation_res = server.server_route_mesg(propagation_message, src_ip, src_port)
                         server.server_send(message=propagation_res, source_ip=src_ip, source_port=src_port)
