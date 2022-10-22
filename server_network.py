@@ -145,7 +145,6 @@ class ServerNetwork:
                     return tweet_response(None, False)
             elif user_request == "end_tweet":
                 if self.tracker.check_and_verify(json_message.get("handle", None), src_ip, src_port):
-                    follower_tuple_list = self.tracker.tweet(json_message.get("handle", None))
                     return basic_response(user_request, True)
                 else:
                     print("User source IP and source Port do not match username - IMPERSONATION")
