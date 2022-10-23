@@ -35,7 +35,7 @@ def main():
                     curr_message, src_ip, src_port = server.server_recv_mesg()
 
                     if json.loads(curr_message.decode()).get('request', None) == "end_tweet" and json.loads(curr_message.decode()).get('handle', None) == json.loads(raw_msg.decode()).get('handle', None):
-                        propagation_message = server.server_parse_mesg(message=raw_msg, source_ip=src_ip, source_port=src_port)
+                        propagation_message = server.server_parse_mesg(message=curr_message, source_ip=src_ip, source_port=src_port)
                         propagation_res = server.server_route_mesg(propagation_message, src_ip, src_port)
                         server.server_send(message=propagation_res, source_ip=src_ip, source_port=src_port)
                         continue
