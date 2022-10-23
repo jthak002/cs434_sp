@@ -2,6 +2,7 @@ import sys
 import json
 from server_network import ServerNetwork
 import socket
+import argparse
 from tracker import Tracker
 
 
@@ -12,7 +13,14 @@ def initialize_socket():
 
 
 def main():
-    server = ServerNetwork()
+    parser = argparse.ArgumentParser(description='TWEETER Server Tracker')
+    parser.add_argument('--ip', '-i', type=str, help='specify the host ip (default: 127.0.0.1)',
+                        default='127.0.0.1')
+    parser.add_argument('--port', '-p', type=int, help='specify the server port (default: 41000)',
+                        default=41001)
+    args = parser.parse_args()
+
+    server = ServerNetwork(host=args.ip, port=args.port)
     server.server_start()
     try:
         while True:

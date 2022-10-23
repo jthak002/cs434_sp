@@ -4,6 +4,7 @@ import time
 import json
 from tracker import Tracker
 
+
 class ServerNetwork:
     port: int
     host: str
@@ -95,8 +96,8 @@ class ServerNetwork:
         if user_request:
             if user_request == "register":
                 is_success = self.tracker.register(json_message['handle'], json_message['source_ip'],
-                                      json_message['tracker_port'], json_message['peer_port_left'],
-                                      json_message['peer_port_right'])
+                                                   json_message['tracker_port'], json_message['peer_port_left'],
+                                                   json_message['peer_port_right'])
 
                 if is_success:
                     print("@" + json_message['handle'] + " has been successfully registered!")
