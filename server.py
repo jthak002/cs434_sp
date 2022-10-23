@@ -6,22 +6,16 @@ import argparse
 from tracker import Tracker
 
 
-def initialize_socket():
-    server = ServerNetwork()
-    server.server_start()
-    return server
-
-
 def main():
     parser = argparse.ArgumentParser(description='TWEETER Server Tracker')
     parser.add_argument('--ip', '-i', type=str, help='specify the host ip (default: 127.0.0.1)',
                         default='127.0.0.1')
     parser.add_argument('--port', '-p', type=int, help='specify the server port (default: 41000)',
-                        default=41001)
+                        default=41000)
     args = parser.parse_args()
 
     server = ServerNetwork(host=args.ip, port=args.port)
-    server.server_start()
+
     try:
         while True:
             # socket.accept() is a TCP method and not a UDP method --> socket.accept() accepts the incoming connection

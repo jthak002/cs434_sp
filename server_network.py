@@ -15,10 +15,9 @@ class ServerNetwork:
         self.tracker = Tracker()
         self.host = host
         self.port = port
-        self.thread_count = 0
 
-    def server_start(self):
         try:
+            print("IP: " + self.host + " " + "PORT: " + str(self.port))
             self.server_side_socket.bind((self.host, self.port))
         except socket.error as e:
             print(str(e))
@@ -80,7 +79,7 @@ class ServerNetwork:
 
         except json.JSONDecodeError:
             print("Encountered error while decoding JSON - discarding packet.")
-            return basic_response(user_request, False)
+            return basic_response(None, False)
 
         return message_dict
 
