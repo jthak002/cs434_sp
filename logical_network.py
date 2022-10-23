@@ -41,7 +41,7 @@ class LogicalNetwork(object):
     def _verify_sender(self, message_sender_tuple: tuple[str, int], addressee_tuple: tuple[str, int]):
         return message_sender_tuple[0] == addressee_tuple[0] and message_sender_tuple[1] == addressee_tuple[1]
 
-    def _verify_success_response(self, request_type: str, raw_message: tuple[b'', tuple[str, int,]]):
+    def _verify_success_response(self, request_type: str, raw_message: tuple[b'', tuple[str, int]]):
         try:
             mesg_payload = json.loads(raw_message[0].decode())
             mesg_request_type = mesg_payload.get('request')

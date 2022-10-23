@@ -27,8 +27,8 @@ class Tracker:
 
     # follow @<handlei> @<handlej>
     def follow(self, curr_user_handle, follow_user_handle):
-        if self.check_username_exist(curr_user_handle) or self.check_username_exist(follow_user_handle):
-            print("Current user or follower does not exit in the database!")
+        if not self.check_username_exist(follow_user_handle):
+            print("Follower does not exit in the database!")
             return False
 
         if curr_user_handle not in self.handles[follow_user_handle]["follower"]:
