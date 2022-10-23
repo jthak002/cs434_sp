@@ -9,7 +9,7 @@ class ServerNetwork:
     host: str
     thread_count = 0
 
-    def __init__(self, host='127.0.0.1', port=5000):
+    def __init__(self, host='127.0.0.1', port=41000):
         self.server_side_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.tracker = Tracker()
         self.host = host
