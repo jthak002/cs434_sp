@@ -206,15 +206,19 @@ class ClientNetwork:
         else:
             print("query_users failed. try again later.")
 
-    def client_follow_handle(self, peer_handle: str):
+    def client_follow_handle(self, my_handle:str, peer_handle: str):
         """
         function to follow a particular user from the list of online users.
+        :param my_handle: user's own handle
         :param peer_handle: the handle who you want to follow.
         :return:
         """
         action = 'follow_user'
         if self.handle == '':
             print("cannot follow user w/o registering. please register before sending the follow command")
+            return
+        if self.handle != my_handle:
+            print("you are trying to impersonate another user - will not register.")
             return
         dict_message = {'request': 'follow_user', 'username_i': self.handle, 'username_j': peer_handle}
         print(f"Compiling the FOLLOW HANDLE REQUEST=> {dict_message}")
