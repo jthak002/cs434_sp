@@ -30,7 +30,7 @@ def main():
             dict_res = server.server_route_mesg(dict_message, src_ip, src_port)
             if dict_res["request"] == "send_tweet":
                 server.server_send(message=dict_res, source_ip=src_ip, source_port=src_port)
-                server.server_side_socket.settimeout(180)
+                # server.server_side_socket.settimeout(180)
                 try:
                     curr_message, src_ip, src_port = server.server_recv_mesg()
 
