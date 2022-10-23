@@ -32,6 +32,19 @@ class LogicalNetwork(object):
     @staticmethod
     def _send_success_message(snd_socket: socket.socket, for_request: str, destination: str, port: int, success=True,
                               additional_args=None):
+        """
+        a helper function that sends a success/failure based on the value of `success` from the `snd_socket`
+        socket.socket object to `destination` and `port` by compiling the parameters into a dictionary and including the
+        `additional_args` dictionary into the message.
+        success message from the dictionary that is compiled using
+        :param snd_socket: socket object to send the message from.
+        :param for_request: the field to be used to populate the `request` portion of the JSON message
+        :param destination: IP of destination
+        :param port: port of the destination
+        :param success: whether `error_code` should show `success` or `failure`
+        :param additional_args: Addtional arguments for the body of the JSON message
+        :return:
+        """
         dict_message = {'request': for_request, 'error_code': 'success' if success else 'failure'}
         if additional_args is not None and type(additional_args) == dict:
             for key, value in additional_args.items():
@@ -39,9 +52,21 @@ class LogicalNetwork(object):
         snd_socket.sendto(json.dumps(dict_message).encode(), (destination, port))
 
     def _verify_sender(self, message_sender_tuple: tuple[str, int], addressee_tuple: tuple[str, int]):
+        """
+        verify if the tuple specified in the message matches the host:port we are expecting a message from.
+        :param message_sender_tuple: tuple containing host:port
+        :param addressee_tuple: tuple containing host:port
+        :return:
+        """
         return message_sender_tuple[0] == addressee_tuple[0] and message_sender_tuple[1] == addressee_tuple[1]
 
     def _verify_success_response(self, request_type: str, raw_message: tuple[b'', tuple[str, int,]]):
+        """
+        verify if the message received from another client indicates successful transmission or not
+        :param request_type: request type --> to verify if the message received is for the same action.
+        :param raw_message: the raw message that we get from the reading the socket contents using recvfrom()
+        :return: True or False based on the action on the remote client was successful.
+        """
         try:
             mesg_payload = json.loads(raw_message[0].decode())
             mesg_request_type = mesg_payload.get('request')
@@ -54,15 +79,36 @@ class LogicalNetwork(object):
             return False
 
     def print_tweet(self, message: str, src_handle: str):
+        """
+        function to pretty print the tweet.
+        :param message: tweet message
+        :param src_handle: the handle that originated the tweet.
+        :return:
+        """
         print("\n#############################################")
         print('\n' + src_handle + " tweeted: " + message + '\n')
 
     def set_handle(self, handle):
+        """
+        function to set the handle - when the logical_network object in ClientNetwork is initialized, it is setup with
+        no handle - this function is called after the ClientNetwork() function is called.
+        :param handle: tweeter handle.
+        :return:
+        """
         self.handle = handle
         self._tuple = (self.hostname, self.port_tracker, self.port_left, self.port_right, self.handle)
 
     # Logical Ring Functions
     def find_left_neighbor(self, follower_list, owner_tuple, my_list=False):
+        """
+        Find the left neighbour given the follower list. the left neighbour of the last member of the list is the owner
+        i.e. the person all the people in the list are following.
+        :param follower_list: list of tuples of all users
+        :param owner_tuple: tuple of the followee of all users in the follower_list
+        :param my_list: flag that this function is being called by the owner of the list - they won't be int he list, so
+        their left neighbour is the first person in the list.
+        :return: tuple containing details of the left neighbour
+        """
         # for the owner of the follower list the left neighbor will be the 1st person in
         # the alphabetically sorted list
         if my_list:
@@ -81,6 +127,15 @@ class LogicalNetwork(object):
         return None
 
     def find_right_neighbor(self, follower_list, owner_tuple, my_list=False):
+        """
+        Find the right neighbour given the follower list. the right neighbour of the first member of the list is the
+        owner i.e. the person all the people in the list are following.
+        :param follower_list: list of tuples of all users
+        :param owner_tuple: tuple of the followee of all users in the follower_list
+        :param my_list: flag that this function is being called by the owner of the list - they won't be in the list, so
+        their right neighbour is the first person in the list.
+        :return: tuple containing details of the right neighbour
+        """
         # for the owner of the follower list the right neighbor will be the last person in
         # the alphabetically sorted list
         if my_list:

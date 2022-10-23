@@ -28,8 +28,9 @@ def interactive_function():
         client.client_query_handles()
         return
     elif follow_rexp.match(input_cmd.strip()):
+        handle_i = input_cmd.split()[1]
         handle_j = input_cmd.split()[2]
-        client.client_follow_handle(handle_j)
+        client.client_follow_handle(handle_i, handle_j)
     elif drop_rexp.match(input_cmd.strip()):
         handle = input_cmd.split()[1]
         client.client_drop_handle(handle)
