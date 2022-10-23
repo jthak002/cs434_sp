@@ -71,11 +71,11 @@ def main():
     parser.add_argument('--ip', '-i', type=str, help='specify the host ip (default: 127.0.0.1)',
                         default='127.0.0.1')
     parser.add_argument('--tracker_port', '-tp', type=int, help='specify the tracker port (default: 5001)',
-                        default=5001)
+                        default=41001)
     parser.add_argument('--left_port', '-lp', type=int, help='specify the left port (default: 5002)',
-                        default=5002)
+                        default=41002)
     parser.add_argument('--right_port', '-rp', type=int, help='specify the right port (default: 5003)',
-                        default=5003)
+                        default=41003)
     args = parser.parse_args()
     print("Welcome to Tweeter!")
     global client

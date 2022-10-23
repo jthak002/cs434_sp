@@ -6,7 +6,7 @@ import time
 from logical_network import LogicalNetwork
 
 TRACKER_URL = os.getenv('TRACKER_URL','127.0.0.1')
-TRACKER_PORT = int(os.getenv('TRACKER_PORT', '5000'))
+TRACKER_PORT = int(os.getenv('TRACKER_PORT', '41000'))
 
 
 class ClientNetwork:
@@ -23,7 +23,7 @@ class ClientNetwork:
     handle: str
     logic_network: LogicalNetwork
 
-    def __init__(self, host='127.0.0.1', port_tracker=5001, port_peer_left=5002, port_peer_right=5003):
+    def __init__(self, host='127.0.0.1', port_tracker=41001, port_peer_left=41002, port_peer_right=41003):
         """
         Constructor that initializes the client-network object. This class is representative of all the client
         actions that are performed - ever option displayed on the client.py file maps to a function in the class
